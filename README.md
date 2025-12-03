@@ -16,11 +16,21 @@
 
 ## Currently Completed Features
 
-### ✅ Account Notes
-- Create, read, update, and delete notes for customer accounts
-- Track account interactions and important details
-- Timestamp tracking for all updates
-- Search and filter by account name
+### ✅ Accounts
+- **Parent-child structure**: Create accounts as main entities with nested notes
+- Create, read, update, and delete customer accounts
+- Track company type, industry, and status
+- View account details with all associated notes
+- Add notes directly to specific accounts
+- Account overview with metadata badges
+
+### ✅ Tasks
+- **Task management**: Create and track sales tasks
+- Complete/uncomplete tasks with checkbox toggle
+- Priority levels (low, medium, high) with visual indicators
+- Due date tracking with overdue alerts
+- Separate views for pending and completed tasks
+- Task descriptions and details
 
 ### ✅ Customer Documents
 - Store customer-facing documents (proposals, contracts, SOWs, presentations)
@@ -255,6 +265,10 @@ npm run db:migrate:prod
 - **Last Updated**: 2025-12-03
 
 ## Recent Updates
+- **2025-12-03**: Added Accounts tab with hierarchical structure for accounts and notes
+- **2025-12-03**: Added Tasks tab with create/complete functionality and priority management
+- **2025-12-03**: Restructured data model - accounts as parent entities with child notes
+- **2025-12-03**: Implemented task completion toggles with visual feedback
 - **2025-12-03**: Upgraded to modern refined design with gradients, improved typography, and polished animations
 - **2025-12-03**: Enhanced visual hierarchy with Inter font family and professional spacing
 - **2025-12-03**: Updated UI to Axon black and yellow theme with sophisticated color palette
