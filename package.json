@@ -15,7 +15,9 @@
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true"
   },
   "dependencies": {
-    "hono": "^4.10.7"
+    "hono": "^4.10.7",
+    "js-yaml": "^4.1.1",
+    "openai": "^6.9.1"
   },
   "devDependencies": {
     "@hono/vite-build": "^1.2.0",

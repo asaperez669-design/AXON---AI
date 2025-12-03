@@ -1205,6 +1205,87 @@ function showError(message) {
     }, 3000);
 }
 
+// ============ AI BANT Extraction Functions ============
+async function extractBANTFromTranscript() {
+    const transcript = document.getElementById('account-note-transcript')?.value?.trim();
+    
+    if (!transcript) {
+        showError('Please paste a transcript first');
+        return;
+    }
+    
+    const btn = document.getElementById('ai-extract-btn');
+    const btnText = document.getElementById('ai-extract-text');
+    const loader = document.getElementById('ai-extract-loader');
+    
+    // Show loading state
+    btn.disabled = true;
+    btnText.textContent = 'Analyzing with AI...';
+    loader.classList.remove('hidden');
+    
+    try {
+        const response = await axios.post('/api/extract-bant', {
+            transcript: transcript
+        });
+        
+        if (response.data.success) {
+            const bantData = response.data.data;
+            
+            // Fill in the BANT fields
+            if (bantData.budget) {
+                document.getElementById('account-note-budget').value = bantData.budget;
+            }
+            if (bantData.authority) {
+                document.getElementById('account-note-authority').value = bantData.authority;
+            }
+            if (bantData.need) {
+                document.getElementById('account-note-need').value = bantData.need;
+            }
+            if (bantData.timeline) {
+                document.getElementById('account-note-timeline').value = bantData.timeline;
+            }
+            if (bantData.risk) {
+                document.getElementById('account-note-risk').value = bantData.risk;
+            }
+            if (bantData.risk_level) {
+                document.getElementById('account-note-risk-level').value = bantData.risk_level;
+            }
+            
+            showSuccess('BANT fields auto-filled successfully! Review and adjust as needed.');
+            
+            // Scroll to BANT section
+            setTimeout(() => {
+                document.getElementById('account-note-budget')?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 500);
+            
+        } else {
+            if (response.data.needsConfig) {
+                showError('⚠️ OpenAI API not configured. Please set up your API key in GenSpark settings under the API Keys tab.');
+            } else {
+                showError(response.data.error || 'Failed to extract BANT information');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error extracting BANT:', error);
+        if (error.response?.data?.needsConfig) {
+            showError('⚠️ OpenAI API not configured. Please set up your API key in GenSpark settings under the API Keys tab.');
+        } else if (error.response?.data?.error) {
+            showError(error.response.data.error);
+        } else {
+            showError('Failed to extract BANT information. Please try again.');
+        }
+    } finally {
+        // Reset button state
+        btn.disabled = false;
+        btnText.textContent = 'Auto-Fill BANT Fields with AI';
+        loader.classList.add('hidden');
+    }
+}
+
 // ============ Search Functions ============
 function searchAccounts() {
     const searchTerm = document.getElementById('account-search').value.toLowerCase().trim();

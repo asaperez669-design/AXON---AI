@@ -4,6 +4,8 @@ import { serveStatic } from 'hono/cloudflare-workers'
 
 type Bindings = {
   DB: D1Database;
+  OPENAI_API_KEY?: string;
+  OPENAI_BASE_URL?: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -488,6 +490,123 @@ app.post('/api/accounts/:accountId/notes', async (c) => {
     return c.json({ success: true, id: result.meta.last_row_id })
   } catch (error) {
     return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// ============ AI BANT Extraction API ============
+app.post('/api/extract-bant', async (c) => {
+  try {
+    const { transcript } = await c.req.json()
+    
+    if (!transcript || transcript.trim().length === 0) {
+      return c.json({ success: false, error: 'Transcript is required' }, 400)
+    }
+    
+    // Check for OpenAI configuration
+    const apiKey = c.env.OPENAI_API_KEY
+    const baseURL = c.env.OPENAI_BASE_URL
+    
+    if (!apiKey || !baseURL) {
+      return c.json({ 
+        success: false, 
+        error: 'OpenAI API not configured. Please set up your API key in GenSpark settings.',
+        needsConfig: true
+      }, 400)
+    }
+    
+    // Call OpenAI API to extract BANT
+    const response = await fetch(`${baseURL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-5',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a sales assistant that extracts BANT (Budget, Authority, Need, Timeline) information from sales call transcripts. 
+
+Analyze the transcript and extract:
+1. Budget: Any mentions of budget amounts, financial constraints, or funding availability
+2. Authority: Decision makers, stakeholders, or people involved in the purchasing decision
+3. Need: Problems they're trying to solve, pain points, or requirements
+4. Timeline: When they need the solution, deadlines, or project timelines
+
+Also assess the risk level (low/medium/high) based on:
+- Budget constraints or uncertainties
+- Decision-making complexity
+- Urgency or lack of timeline
+- Competition or alternatives mentioned
+- Unclear needs or requirements
+
+Return ONLY a valid JSON object with this exact structure (no markdown, no code blocks):
+{
+  "budget": "extracted budget information or empty string",
+  "authority": "extracted authority information or empty string",
+  "need": "extracted need information or empty string",
+  "timeline": "extracted timeline information or empty string",
+  "risk": "risk assessment details or empty string",
+  "risk_level": "low" or "medium" or "high" or empty string
+}
+
+If information is not mentioned in the transcript, use an empty string for that field.`
+          },
+          {
+            role: 'user',
+            content: `Extract BANT information from this transcript:\n\n${transcript}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      })
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.text()
+      console.error('OpenAI API error:', errorData)
+      return c.json({ 
+        success: false, 
+        error: `AI service error: ${response.statusText}` 
+      }, 500)
+    }
+    
+    const data = await response.json()
+    const aiResponse = data.choices[0]?.message?.content
+    
+    if (!aiResponse) {
+      return c.json({ 
+        success: false, 
+        error: 'No response from AI service' 
+      }, 500)
+    }
+    
+    // Parse the AI response
+    let bantData
+    try {
+      // Remove markdown code blocks if present
+      const cleanResponse = aiResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+      bantData = JSON.parse(cleanResponse)
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', aiResponse)
+      return c.json({ 
+        success: false, 
+        error: 'Failed to parse AI response. Please try again.' 
+      }, 500)
+    }
+    
+    return c.json({ 
+      success: true, 
+      data: bantData 
+    })
+    
+  } catch (error) {
+    console.error('Error extracting BANT:', error)
+    return c.json({ 
+      success: false, 
+      error: String(error) 
+    }, 500)
   }
 })
 
@@ -1103,6 +1222,45 @@ app.get('/', (c) => {
                     <div>
                         <label class="block text-sm font-medium mb-2">Note Content</label>
                         <textarea id="account-note-content" required rows="5" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
+                    </div>
+                    
+                    <!-- AI Transcript Section -->
+                    <div class="border-t border-gray-700 pt-5 mt-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-semibold text-yellow-400 flex items-center">
+                                <i class="fas fa-robot mr-2"></i>AI Assistant
+                            </h4>
+                            <span class="text-xs text-gray-500 bg-gray-800 px-3 py-1 rounded-full">
+                                <i class="fas fa-sparkles mr-1"></i>Powered by ChatGPT
+                            </span>
+                        </div>
+                        <div class="bg-gradient-to-br from-yellow-500/5 to-yellow-600/5 border border-yellow-500/20 rounded-xl p-5">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-2 text-yellow-300">
+                                    <i class="fas fa-file-alt mr-1"></i>Paste Call/Meeting Transcript
+                                </label>
+                                <textarea 
+                                    id="account-note-transcript" 
+                                    rows="6" 
+                                    class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all bg-gray-900/50" 
+                                    placeholder="Paste your call or meeting transcript here, and AI will automatically extract BANT information...&#10;&#10;Example:&#10;'John mentioned they have a $50K budget allocated for Q1. Sarah from procurement will be the final decision maker. They need to solve their inventory management issues before the busy season starts in March...'"></textarea>
+                            </div>
+                            <button 
+                                type="button" 
+                                onclick="extractBANTFromTranscript()" 
+                                id="ai-extract-btn"
+                                class="w-full btn-primary px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center">
+                                <i class="fas fa-wand-magic-sparkles mr-2"></i>
+                                <span id="ai-extract-text">Auto-Fill BANT Fields with AI</span>
+                                <span id="ai-extract-loader" class="hidden ml-2">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </span>
+                            </button>
+                            <p class="text-xs text-gray-400 mt-3 text-center">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                AI will analyze the transcript and automatically fill Budget, Authority, Need, and Timeline fields
+                            </p>
+                        </div>
                     </div>
                     
                     <!-- BANT Fields Section -->
