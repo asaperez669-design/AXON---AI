@@ -565,11 +565,21 @@ If information is not mentioned in the transcript, use an empty string for that 
     
     if (!response.ok) {
       const errorData = await response.text()
-      console.error('OpenAI API error:', errorData)
+      console.error('OpenAI API error:', response.status, errorData)
+      
+      let errorMessage = `AI service error: ${response.statusText}`
+      
+      if (response.status === 403 || response.status === 401) {
+        errorMessage = 'API key authentication failed. Please check your API key configuration. Run: ./setup-openai.sh'
+      } else if (response.status === 429) {
+        errorMessage = 'Rate limit exceeded. Please try again in a moment.'
+      }
+      
       return c.json({ 
         success: false, 
-        error: `AI service error: ${response.statusText}` 
-      }, 500)
+        error: errorMessage,
+        needsConfig: response.status === 403 || response.status === 401
+      }, response.status)
     }
     
     const data = await response.json()
