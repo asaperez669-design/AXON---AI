@@ -45,11 +45,11 @@ app.get('/api/notes/:id', async (c) => {
 
 app.post('/api/notes', async (c) => {
   try {
-    const { account_name, note_title, note_content } = await c.req.json()
+    const { account_name, note_title, note_content, budget, authority, need, timeline, risk, risk_level } = await c.req.json()
     
     const result = await c.env.DB.prepare(
-      'INSERT INTO account_notes (account_name, note_title, note_content) VALUES (?, ?, ?)'
-    ).bind(account_name, note_title, note_content).run()
+      'INSERT INTO account_notes (account_name, note_title, note_content, budget, authority, need, timeline, risk, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(account_name, note_title, note_content, budget || null, authority || null, need || null, timeline || null, risk || null, risk_level || null).run()
     
     return c.json({ success: true, id: result.meta.last_row_id })
   } catch (error) {
@@ -60,11 +60,11 @@ app.post('/api/notes', async (c) => {
 app.put('/api/notes/:id', async (c) => {
   try {
     const id = c.req.param('id')
-    const { account_name, note_title, note_content } = await c.req.json()
+    const { account_name, note_title, note_content, budget, authority, need, timeline, risk, risk_level } = await c.req.json()
     
     await c.env.DB.prepare(
-      'UPDATE account_notes SET account_name = ?, note_title = ?, note_content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    ).bind(account_name, note_title, note_content, id).run()
+      'UPDATE account_notes SET account_name = ?, note_title = ?, note_content = ?, budget = ?, authority = ?, need = ?, timeline = ?, risk = ?, risk_level = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(account_name, note_title, note_content, budget || null, authority || null, need || null, timeline || null, risk || null, risk_level || null, id).run()
     
     return c.json({ success: true })
   } catch (error) {
@@ -468,7 +468,7 @@ app.delete('/api/accounts/:id', async (c) => {
 app.post('/api/accounts/:accountId/notes', async (c) => {
   try {
     const accountId = c.req.param('accountId')
-    const { note_title, note_content } = await c.req.json()
+    const { note_title, note_content, budget, authority, need, timeline, risk, risk_level } = await c.req.json()
     
     // Get account name
     const { results: accountResults } = await c.env.DB.prepare(
@@ -482,8 +482,8 @@ app.post('/api/accounts/:accountId/notes', async (c) => {
     const account_name = accountResults[0].account_name
     
     const result = await c.env.DB.prepare(
-      'INSERT INTO account_notes (account_name, note_title, note_content, account_id) VALUES (?, ?, ?, ?)'
-    ).bind(account_name, note_title, note_content, accountId).run()
+      'INSERT INTO account_notes (account_name, note_title, note_content, account_id, budget, authority, need, timeline, risk, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(account_name, note_title, note_content, accountId, budget || null, authority || null, need || null, timeline || null, risk || null, risk_level || null).run()
     
     return c.json({ success: true, id: result.meta.last_row_id })
   } catch (error) {
@@ -689,6 +689,95 @@ app.get('/', (c) => {
             ::-webkit-scrollbar-thumb:hover {
                 background: #4a4a4a;
             }
+            
+            /* Light Mode Styles */
+            body.light-mode {
+                background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            }
+            .light-mode .card {
+                background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+                border: 1px solid #e0e0e0;
+                color: #1a1a1a;
+            }
+            .light-mode .card:hover {
+                border-color: #d0d0d0;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1),
+                            0 0 0 1px rgba(255, 198, 0, 0.2);
+            }
+            .light-mode input,
+            .light-mode textarea,
+            .light-mode select {
+                background-color: #ffffff;
+                border: 1px solid #d0d0d0;
+                color: #1a1a1a;
+            }
+            .light-mode input:hover,
+            .light-mode textarea:hover,
+            .light-mode select:hover {
+                border-color: #b0b0b0;
+            }
+            .light-mode label {
+                color: #2a2a2a;
+            }
+            .light-mode .modal-content {
+                background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+                border: 1px solid #d0d0d0;
+                color: #1a1a1a;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15),
+                            0 0 0 1px rgba(255, 198, 0, 0.2);
+            }
+            .light-mode .modal {
+                background-color: rgba(0,0,0,0.5);
+            }
+            .light-mode .btn-secondary {
+                background-color: #e0e0e0;
+                color: #2a2a2a;
+                border: 1px solid #d0d0d0;
+            }
+            .light-mode .btn-secondary:hover {
+                background-color: #d0d0d0;
+                border-color: #b0b0b0;
+            }
+            .light-mode .tab-button {
+                color: #4a4a4a;
+            }
+            .light-mode .tab-button:hover:not(.active) {
+                background-color: #e0e0e0;
+                color: #000000;
+            }
+            .light-mode .filter-button:hover:not(.active) {
+                background-color: #e0e0e0;
+                border-color: #d0d0d0;
+            }
+            .light-mode header {
+                background: linear-gradient(to right, #ffffff, #f5f5f5, #ffffff);
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .light-mode .text-gray-400 {
+                color: #6a6a6a !important;
+            }
+            .light-mode .text-gray-300 {
+                color: #5a5a5a !important;
+            }
+            .light-mode .text-white {
+                color: #1a1a1a !important;
+            }
+            .light-mode h1, .light-mode h2, .light-mode h3, .light-mode h4 {
+                color: #1a1a1a !important;
+            }
+            .light-mode .bg-black\\/50 {
+                background-color: rgba(255, 255, 255, 0.9) !important;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .light-mode ::-webkit-scrollbar-track {
+                background: #f5f5f5;
+            }
+            .light-mode ::-webkit-scrollbar-thumb {
+                background: #c0c0c0;
+            }
+            .light-mode ::-webkit-scrollbar-thumb:hover {
+                background: #a0a0a0;
+            }
         </style>
     </head>
     <body class="bg-gray-900">
@@ -705,7 +794,12 @@ app.get('/', (c) => {
                             </h1>
                             <p class="text-gray-400 mt-1 text-sm font-medium">Sales Operations Platform</p>
                         </div>
-                        <div class="hidden md:flex items-center space-x-4">
+                        <div class="hidden md:flex items-center space-x-6">
+                            <!-- Theme Toggle -->
+                            <button onclick="toggleTheme()" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-all" id="theme-toggle">
+                                <i class="fas fa-moon" id="theme-icon"></i>
+                                <span class="text-sm font-medium text-gray-300" id="theme-text">Dark</span>
+                            </button>
                             <div class="text-right">
                                 <p class="text-xs text-gray-500 uppercase tracking-wider">Status</p>
                                 <div class="flex items-center mt-1">
@@ -987,6 +1081,54 @@ app.get('/', (c) => {
                         <label class="block text-sm font-medium mb-2">Note Content</label>
                         <textarea id="account-note-content" required rows="5" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
                     </div>
+                    
+                    <!-- BANT Fields Section -->
+                    <div class="border-t border-gray-700 pt-5 mt-5">
+                        <h4 class="text-lg font-semibold text-yellow-400 mb-4">
+                            <i class="fas fa-chart-line mr-2"></i>BANT Qualification
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Budget</label>
+                                <textarea id="account-note-budget" rows="2" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="What is their budget? Any constraints?"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Authority</label>
+                                <textarea id="account-note-authority" rows="2" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="Who are the decision makers?"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Need</label>
+                                <textarea id="account-note-need" rows="2" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="What problems are they trying to solve?"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Timeline</label>
+                                <textarea id="account-note-timeline" rows="2" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="When do they need a solution?"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Assessment Section -->
+                    <div class="border-t border-gray-700 pt-5 mt-5">
+                        <h4 class="text-lg font-semibold text-yellow-400 mb-4">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Risk Assessment
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Risk Level</label>
+                                <select id="account-note-risk-level" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                                    <option value="">Select risk level...</option>
+                                    <option value="low">Low Risk</option>
+                                    <option value="medium">Medium Risk</option>
+                                    <option value="high">High Risk</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Risk Details</label>
+                                <textarea id="account-note-risk" rows="3" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="Describe any risks or concerns (budget, competition, timing, etc.)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" onclick="closeAccountNoteModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
                         <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Note</button>

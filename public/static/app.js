@@ -137,12 +137,62 @@ async function viewAccountDetails(accountId) {
                         <h4 class="text-xl font-semibold text-white mb-4">Notes</h4>
                         <div class="space-y-4">
                             ${notes.length === 0 ? '<p class="text-gray-400 text-center py-8">No notes yet. Add your first note!</p>' : notes.map(note => `
-                                <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h5 class="font-semibold text-white">${escapeHtml(note.note_title)}</h5>
+                                <div class="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <h5 class="font-semibold text-lg text-white">${escapeHtml(note.note_title)}</h5>
                                         <span class="text-xs text-gray-500">${formatDate(note.created_at)}</span>
                                     </div>
-                                    <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(note.note_content)}</p>
+                                    <p class="text-gray-300 whitespace-pre-wrap leading-relaxed mb-4">${escapeHtml(note.note_content)}</p>
+                                    
+                                    ${note.budget || note.authority || note.need || note.timeline ? `
+                                        <div class="border-t border-gray-700 pt-4 mt-4">
+                                            <h6 class="text-sm font-semibold text-yellow-400 mb-3 flex items-center">
+                                                <i class="fas fa-chart-line mr-2"></i>BANT Qualification
+                                            </h6>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                ${note.budget ? `
+                                                    <div>
+                                                        <span class="font-medium text-gray-400">Budget:</span>
+                                                        <p class="text-gray-300 mt-1">${escapeHtml(note.budget)}</p>
+                                                    </div>
+                                                ` : ''}
+                                                ${note.authority ? `
+                                                    <div>
+                                                        <span class="font-medium text-gray-400">Authority:</span>
+                                                        <p class="text-gray-300 mt-1">${escapeHtml(note.authority)}</p>
+                                                    </div>
+                                                ` : ''}
+                                                ${note.need ? `
+                                                    <div>
+                                                        <span class="font-medium text-gray-400">Need:</span>
+                                                        <p class="text-gray-300 mt-1">${escapeHtml(note.need)}</p>
+                                                    </div>
+                                                ` : ''}
+                                                ${note.timeline ? `
+                                                    <div>
+                                                        <span class="font-medium text-gray-400">Timeline:</span>
+                                                        <p class="text-gray-300 mt-1">${escapeHtml(note.timeline)}</p>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${note.risk || note.risk_level ? `
+                                        <div class="border-t border-gray-700 pt-4 mt-4">
+                                            <h6 class="text-sm font-semibold text-yellow-400 mb-3 flex items-center">
+                                                <i class="fas fa-exclamation-triangle mr-2"></i>Risk Assessment
+                                                ${note.risk_level ? `
+                                                    <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium ${
+                                                        note.risk_level === 'low' ? 'bg-green-500/20 text-green-400' :
+                                                        note.risk_level === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        'bg-red-500/20 text-red-400'
+                                                    }">${note.risk_level.toUpperCase()} RISK</span>
+                                                ` : ''}
+                                            </h6>
+                                            ${note.risk ? `<p class="text-gray-300 text-sm">${escapeHtml(note.risk)}</p>` : ''}
+                                        </div>
+                                    ` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -260,7 +310,13 @@ document.getElementById('account-note-form').addEventListener('submit', async (e
     const accountId = document.getElementById('account-note-account-id').value;
     const data = {
         note_title: document.getElementById('account-note-title').value,
-        note_content: document.getElementById('account-note-content').value
+        note_content: document.getElementById('account-note-content').value,
+        budget: document.getElementById('account-note-budget').value,
+        authority: document.getElementById('account-note-authority').value,
+        need: document.getElementById('account-note-need').value,
+        timeline: document.getElementById('account-note-timeline').value,
+        risk: document.getElementById('account-note-risk').value,
+        risk_level: document.getElementById('account-note-risk-level').value
     };
     
     try {
@@ -1118,7 +1174,46 @@ function showError(message) {
     }, 3000);
 }
 
-// Initialize - Load accounts by default
+// ============ Theme Toggle Functions ============
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    
+    if (body.classList.contains('light-mode')) {
+        // Switch to dark mode
+        body.classList.remove('light-mode');
+        themeIcon.className = 'fas fa-moon';
+        themeText.textContent = 'Dark';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        // Switch to light mode
+        body.classList.add('light-mode');
+        themeIcon.className = 'fas fa-sun';
+        themeText.textContent = 'Light';
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    
+    if (savedTheme === 'light') {
+        body.classList.add('light-mode');
+        themeIcon.className = 'fas fa-sun';
+        themeText.textContent = 'Light';
+    } else {
+        body.classList.remove('light-mode');
+        themeIcon.className = 'fas fa-moon';
+        themeText.textContent = 'Dark';
+    }
+}
+
+// Initialize - Load accounts by default and set theme
 document.addEventListener('DOMContentLoaded', () => {
+    initializeTheme();
     loadAccounts();
 });
