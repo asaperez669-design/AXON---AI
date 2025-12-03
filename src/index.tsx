@@ -840,15 +840,38 @@ app.get('/', (c) => {
                 <!-- Accounts Tab -->
                 <div id="accounts-tab" class="tab-content active">
                     <div class="card rounded-2xl shadow-2xl p-8">
-                        <div class="flex justify-between items-center mb-8">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                             <div>
                                 <h2 class="text-2xl font-bold text-white mb-1">Accounts</h2>
                                 <p class="text-gray-400 text-sm">Manage customer accounts and their notes</p>
                             </div>
-                            <button onclick="openAccountModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
+                            <button onclick="openAccountModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all whitespace-nowrap">
                                 <i class="fas fa-plus mr-2"></i>New Account
                             </button>
                         </div>
+                        
+                        <!-- Search Bar -->
+                        <div class="mb-6">
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="account-search" 
+                                    placeholder="Search accounts by name or keywords in notes..." 
+                                    class="w-full px-5 py-3.5 pl-12 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"
+                                    oninput="searchAccounts()"
+                                />
+                                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                                <button 
+                                    id="clear-search" 
+                                    onclick="clearSearch()" 
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-yellow-400 transition-colors hidden"
+                                >
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div id="search-results-count" class="text-sm text-gray-400 mt-2 hidden"></div>
+                        </div>
+                        
                         <div id="accounts-list" class="space-y-4">
                             <!-- Accounts will be loaded here -->
                         </div>

@@ -46,19 +46,50 @@ function loadTabData(tabName) {
 
 // ============ Accounts Functions ============
 let currentAccountId = null;
+let allAccountsData = []; // Store all accounts and their notes for search
 
 async function loadAccounts() {
     try {
         const response = await axios.get('/api/accounts');
         const accounts = response.data.data || [];
         
-        const accountsList = document.getElementById('accounts-list');
-        if (accounts.length === 0) {
-            accountsList.innerHTML = '<p class="text-gray-400 text-center py-8">No accounts yet. Create your first account!</p>';
-            return;
-        }
+        // Load all notes for search functionality
+        const notesPromises = accounts.map(account => 
+            axios.get(`/api/accounts/${account.id}/notes`)
+                .then(res => ({ accountId: account.id, notes: res.data.data || [] }))
+                .catch(() => ({ accountId: account.id, notes: [] }))
+        );
+        const notesData = await Promise.all(notesPromises);
         
-        accountsList.innerHTML = accounts.map(account => `
+        // Store accounts with their notes for search
+        allAccountsData = accounts.map(account => {
+            const accountNotes = notesData.find(n => n.accountId === account.id)?.notes || [];
+            return { ...account, notes: accountNotes };
+        });
+        
+        displayAccounts(allAccountsData);
+    } catch (error) {
+        console.error('Error loading accounts:', error);
+        showError('Failed to load accounts');
+    }
+}
+
+function displayAccounts(accounts) {
+    const accountsList = document.getElementById('accounts-list');
+    
+    if (accounts.length === 0) {
+        const searchTerm = document.getElementById('account-search')?.value;
+        if (searchTerm) {
+            accountsList.innerHTML = '<p class="text-gray-400 text-center py-8">No accounts found matching your search.</p>';
+        } else {
+            accountsList.innerHTML = '<p class="text-gray-400 text-center py-8">No accounts yet. Create your first account!</p>';
+        }
+        return;
+    }
+    
+    accountsList.innerHTML = accounts.map(account => {
+        const noteCount = account.notes ? account.notes.length : 0;
+        return `
             <div class="card rounded-xl p-6 hover:shadow-2xl transition-all cursor-pointer" onclick="viewAccountDetails(${account.id})">
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
@@ -73,6 +104,9 @@ async function loadAccounts() {
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
                                 <i class="fas fa-check-circle mr-1"></i>${escapeHtml(account.status)}
                             </span>
+                            ${noteCount > 0 ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                <i class="fas fa-sticky-note mr-1"></i>${noteCount} note${noteCount !== 1 ? 's' : ''}
+                            </span>` : ''}
                         </div>
                     </div>
                     <div class="flex space-x-2">
@@ -90,11 +124,8 @@ async function loadAccounts() {
                     </p>
                 </div>
             </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading accounts:', error);
-        showError('Failed to load accounts');
-    }
+        `;
+    }).join('');
 }
 
 async function viewAccountDetails(accountId) {
@@ -1172,6 +1203,99 @@ function showError(message) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// ============ Search Functions ============
+function searchAccounts() {
+    const searchTerm = document.getElementById('account-search').value.toLowerCase().trim();
+    const clearBtn = document.getElementById('clear-search');
+    const resultsCount = document.getElementById('search-results-count');
+    
+    // Show/hide clear button
+    if (searchTerm) {
+        clearBtn.classList.remove('hidden');
+    } else {
+        clearBtn.classList.add('hidden');
+        resultsCount.classList.add('hidden');
+        displayAccounts(allAccountsData);
+        return;
+    }
+    
+    // Search through accounts and their notes
+    const filteredAccounts = allAccountsData.filter(account => {
+        // Search in account name
+        if (account.account_name.toLowerCase().includes(searchTerm)) {
+            return true;
+        }
+        
+        // Search in company type
+        if (account.company_type && account.company_type.toLowerCase().includes(searchTerm)) {
+            return true;
+        }
+        
+        // Search in industry
+        if (account.industry && account.industry.toLowerCase().includes(searchTerm)) {
+            return true;
+        }
+        
+        // Search in notes
+        if (account.notes && account.notes.length > 0) {
+            return account.notes.some(note => {
+                // Search in note title
+                if (note.note_title && note.note_title.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                
+                // Search in note content
+                if (note.note_content && note.note_content.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                
+                // Search in BANT fields
+                if (note.budget && note.budget.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                if (note.authority && note.authority.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                if (note.need && note.need.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                if (note.timeline && note.timeline.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                
+                // Search in risk fields
+                if (note.risk && note.risk.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                if (note.risk_level && note.risk_level.toLowerCase().includes(searchTerm)) {
+                    return true;
+                }
+                
+                return false;
+            });
+        }
+        
+        return false;
+    });
+    
+    // Show results count
+    resultsCount.classList.remove('hidden');
+    if (filteredAccounts.length === 1) {
+        resultsCount.innerHTML = `<i class="fas fa-search mr-1"></i>Found 1 account matching "<span class="text-yellow-400 font-medium">${escapeHtml(searchTerm)}</span>"`;
+    } else {
+        resultsCount.innerHTML = `<i class="fas fa-search mr-1"></i>Found ${filteredAccounts.length} accounts matching "<span class="text-yellow-400 font-medium">${escapeHtml(searchTerm)}</span>"`;
+    }
+    
+    displayAccounts(filteredAccounts);
+}
+
+function clearSearch() {
+    document.getElementById('account-search').value = '';
+    document.getElementById('clear-search').classList.add('hidden');
+    document.getElementById('search-results-count').classList.add('hidden');
+    displayAccounts(allAccountsData);
 }
 
 // ============ Theme Toggle Functions ============
