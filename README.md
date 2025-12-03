@@ -30,6 +30,8 @@
 
 ### ✅ Territory Plans
 - Create and manage territory plans
+- **Account Type Distinction**: Separate Growth (renewals, rewrites, expansions) from Acquisition (net new) accounts
+- Filter plans by account type with visual indicators
 - Track plan status (draft, active, completed)
 - Edit territory plans with version tracking
 - Associate plans with specific territories
@@ -64,9 +66,10 @@
 - `GET /api/plans` - Get all territory plans
 - `GET /api/plans/:id` - Get a specific plan
 - `POST /api/plans` - Create a new plan
-  - Body: `{ plan_name, territory_name, plan_content, status }`
+  - Body: `{ plan_name, territory_name, plan_content, status, account_type }`
+  - `account_type`: "growth" (renewals, rewrites, expansions) or "acquisition" (net new)
 - `PUT /api/plans/:id` - Update a plan
-  - Body: `{ plan_name, territory_name, plan_content, status }`
+  - Body: `{ plan_name, territory_name, plan_content, status, account_type }`
 - `DELETE /api/plans/:id` - Delete a plan
 
 ### 1:1 Documents API
@@ -105,6 +108,9 @@
 - `territory_name`: Text (Territory identifier)
 - `plan_content`: Text (Plan details)
 - `status`: Text (draft, active, completed)
+- `account_type`: Text (growth or acquisition)
+  - **Growth**: Existing customers (renewals, rewrites, upsells, expansions)
+  - **Acquisition**: Net new prospects (never been customers before)
 - `created_at`: DateTime (Auto-generated)
 - `updated_at`: DateTime (Auto-updated)
 
@@ -174,6 +180,7 @@
 - **Backend**: Hono (lightweight web framework)
 - **Database**: Cloudflare D1 (SQLite-based)
 - **Frontend**: Vanilla JavaScript with Tailwind CSS
+- **Design**: Axon black and yellow theme
 - **Icons**: Font Awesome
 - **HTTP Client**: Axios
 - **Hosting**: Cloudflare Pages
@@ -244,7 +251,13 @@ npm run db:migrate:prod
 - **Platform**: Cloudflare Pages
 - **Status**: ✅ Active (Development)
 - **Database**: Cloudflare D1 (Local development mode)
+- **Theme**: Axon black and yellow
 - **Last Updated**: 2025-12-03
+
+## Recent Updates
+- **2025-12-03**: Updated UI to Axon black and yellow theme
+- **2025-12-03**: Added Growth vs Acquisition distinction for territory plans with filtering capabilities
+- **2025-12-03**: Enhanced territory plan data model with account_type field
 
 ## Features Not Yet Implemented
 - User authentication and authorization
