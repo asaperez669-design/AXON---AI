@@ -46,30 +46,30 @@ async function loadNotes() {
         
         const notesList = document.getElementById('notes-list');
         if (notes.length === 0) {
-            notesList.innerHTML = '<p class="text-gray-500 text-center py-8">No notes yet. Create your first note!</p>';
+            notesList.innerHTML = '<p class="text-gray-400 text-center py-8">No notes yet. Create your first note!</p>';
             return;
         }
         
         notesList.innerHTML = notes.map(note => `
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-gray-800">${escapeHtml(note.note_title)}</h3>
-                        <p class="text-sm text-blue-600 font-medium">
+                        <h3 class="font-bold text-lg text-yellow-400">${escapeHtml(note.note_title)}</h3>
+                        <p class="text-sm text-gray-300 font-medium">
                             <i class="fas fa-building mr-1"></i>${escapeHtml(note.account_name)}
                         </p>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editNote(${note.id})" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="editNote(${note.id})" class="text-yellow-400 hover:text-yellow-300">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteNote(${note.id})" class="text-red-600 hover:text-red-800">
+                        <button onclick="deleteNote(${note.id})" class="text-red-400 hover:text-red-300">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(note.note_content)}</p>
-                <p class="text-xs text-gray-400 mt-2">
+                <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(note.note_content)}</p>
+                <p class="text-xs text-gray-500 mt-2">
                     <i class="far fa-clock mr-1"></i>Updated: ${formatDate(note.updated_at)}
                 </p>
             </div>
@@ -169,35 +169,35 @@ async function loadDocuments() {
         
         const documentsList = document.getElementById('documents-list');
         if (documents.length === 0) {
-            documentsList.innerHTML = '<p class="text-gray-500 text-center py-8">No documents yet. Upload your first document!</p>';
+            documentsList.innerHTML = '<p class="text-gray-400 text-center py-8">No documents yet. Upload your first document!</p>';
             return;
         }
         
         documentsList.innerHTML = documents.map(doc => `
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-gray-800">${escapeHtml(doc.document_name)}</h3>
+                        <h3 class="font-bold text-lg text-yellow-400">${escapeHtml(doc.document_name)}</h3>
                         <div class="flex items-center space-x-3 mt-1">
-                            <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            <span class="text-sm bg-yellow-400 text-black px-2 py-1 rounded font-semibold">
                                 ${escapeHtml(doc.document_type)}
                             </span>
-                            ${doc.account_name ? `<span class="text-sm text-gray-600">
+                            ${doc.account_name ? `<span class="text-sm text-gray-300">
                                 <i class="fas fa-building mr-1"></i>${escapeHtml(doc.account_name)}
                             </span>` : ''}
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editDocument(${doc.id})" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="editDocument(${doc.id})" class="text-yellow-400 hover:text-yellow-300">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteDocument(${doc.id})" class="text-red-600 hover:text-red-800">
+                        <button onclick="deleteDocument(${doc.id})" class="text-red-400 hover:text-red-300">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(doc.document_content)}</p>
-                <p class="text-xs text-gray-400 mt-2">
+                <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(doc.document_content)}</p>
+                <p class="text-xs text-gray-500 mt-2">
                     <i class="far fa-clock mr-1"></i>Updated: ${formatDate(doc.updated_at)}
                 </p>
             </div>
@@ -292,49 +292,74 @@ document.getElementById('document-form').addEventListener('submit', async (e) =>
 });
 
 // ============ Territory Plans Functions ============
-async function loadPlans() {
+let currentFilter = 'all';
+
+async function loadPlans(filter = currentFilter) {
     try {
         const response = await axios.get('/api/plans');
-        const plans = response.data.data || [];
+        let plans = response.data.data || [];
+        
+        // Filter plans by account type
+        if (filter !== 'all') {
+            plans = plans.filter(p => p.account_type === filter);
+        }
         
         const plansList = document.getElementById('plans-list');
         if (plans.length === 0) {
-            plansList.innerHTML = '<p class="text-gray-500 text-center py-8">No territory plans yet. Create your first plan!</p>';
+            plansList.innerHTML = '<p class="text-gray-400 text-center py-8">No territory plans yet. Create your first plan!</p>';
             return;
         }
         
         plansList.innerHTML = plans.map(plan => {
             const statusColors = {
-                draft: 'bg-gray-100 text-gray-800',
-                active: 'bg-green-100 text-green-800',
-                completed: 'bg-blue-100 text-blue-800'
+                draft: 'bg-gray-700 text-gray-300',
+                active: 'bg-green-600 text-white',
+                completed: 'bg-blue-600 text-white'
+            };
+            
+            const accountTypeColors = {
+                growth: 'bg-blue-500 text-white',
+                acquisition: 'bg-green-500 text-white'
+            };
+            
+            const accountTypeIcons = {
+                growth: 'fa-chart-line',
+                acquisition: 'fa-plus-circle'
+            };
+            
+            const accountTypeLabels = {
+                growth: 'Growth',
+                acquisition: 'Acquisition'
             };
             
             return `
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900" data-account-type="${plan.account_type}">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex-1">
-                            <h3 class="font-bold text-lg text-gray-800">${escapeHtml(plan.plan_name)}</h3>
-                            <div class="flex items-center space-x-3 mt-1">
-                                <span class="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                            <h3 class="font-bold text-lg text-yellow-400">${escapeHtml(plan.plan_name)}</h3>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span class="text-sm ${accountTypeColors[plan.account_type]} px-3 py-1 rounded-full font-semibold">
+                                    <i class="fas ${accountTypeIcons[plan.account_type]} mr-1"></i>${accountTypeLabels[plan.account_type]}
+                                </span>
+                                <span class="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded">
                                     <i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(plan.territory_name)}
                                 </span>
-                                <span class="text-sm ${statusColors[plan.status]} px-2 py-1 rounded capitalize">
+                                <span class="text-sm ${statusColors[plan.status]} px-2 py-1 rounded capitalize font-medium">
                                     ${escapeHtml(plan.status)}
                                 </span>
                             </div>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="editPlan(${plan.id})" class="text-blue-600 hover:text-blue-800">
+                            <button onclick="editPlan(${plan.id})" class="text-yellow-400 hover:text-yellow-300">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button onclick="deletePlan(${plan.id})" class="text-red-600 hover:text-red-800">
+                            <button onclick="deletePlan(${plan.id})" class="text-red-400 hover:text-red-300">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(plan.plan_content)}</p>
-                    <p class="text-xs text-gray-400 mt-2">
+                    <p class="text-gray-300 whitespace-pre-wrap mt-3">${escapeHtml(plan.plan_content)}</p>
+                    <p class="text-xs text-gray-500 mt-2">
                         <i class="far fa-clock mr-1"></i>Updated: ${formatDate(plan.updated_at)}
                     </p>
                 </div>
@@ -344,6 +369,24 @@ async function loadPlans() {
         console.error('Error loading plans:', error);
         showError('Failed to load territory plans');
     }
+}
+
+function filterPlans(filter) {
+    currentFilter = filter;
+    
+    // Update button states
+    document.querySelectorAll('.filter-button').forEach(btn => {
+        btn.classList.remove('active', 'bg-yellow-400', 'text-black', 'font-semibold');
+        btn.classList.add('bg-gray-700', 'text-gray-300');
+    });
+    
+    const activeBtn = document.querySelector(`[data-filter="${filter}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-yellow-400', 'text-black', 'font-semibold');
+        activeBtn.classList.remove('bg-gray-700', 'text-gray-300');
+    }
+    
+    loadPlans(filter);
 }
 
 function openPlanModal(planId = null) {
@@ -376,6 +419,7 @@ async function loadPlanForEdit(id) {
         document.getElementById('plan-id').value = plan.id;
         document.getElementById('plan-name').value = plan.plan_name;
         document.getElementById('plan-territory').value = plan.territory_name;
+        document.getElementById('plan-account-type').value = plan.account_type || 'growth';
         document.getElementById('plan-status').value = plan.status;
         document.getElementById('plan-content').value = plan.plan_content;
     } catch (error) {
@@ -409,7 +453,8 @@ document.getElementById('plan-form').addEventListener('submit', async (e) => {
         plan_name: document.getElementById('plan-name').value,
         territory_name: document.getElementById('plan-territory').value,
         plan_content: document.getElementById('plan-content').value,
-        status: document.getElementById('plan-status').value
+        status: document.getElementById('plan-status').value,
+        account_type: document.getElementById('plan-account-type').value
     };
     
     try {
@@ -437,49 +482,49 @@ async function loadOneOnOneDocs() {
         
         const docsList = document.getElementById('oneononedocs-list');
         if (docs.length === 0) {
-            docsList.innerHTML = '<p class="text-gray-500 text-center py-8">No 1:1 documents yet. Create your first meeting note!</p>';
+            docsList.innerHTML = '<p class="text-gray-400 text-center py-8">No 1:1 documents yet. Create your first meeting note!</p>';
             return;
         }
         
         docsList.innerHTML = docs.map(doc => `
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-gray-800">
-                            <i class="fas fa-user-tie mr-2 text-blue-600"></i>${escapeHtml(doc.manager_name)}
+                        <h3 class="font-bold text-lg text-yellow-400">
+                            <i class="fas fa-user-tie mr-2"></i>${escapeHtml(doc.manager_name)}
                         </h3>
                         <div class="flex items-center space-x-3 mt-1">
-                            <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            <span class="text-sm bg-yellow-400 text-black px-2 py-1 rounded font-semibold">
                                 <i class="far fa-calendar mr-1"></i>${formatDate(doc.meeting_date)}
                             </span>
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editOneOnOne(${doc.id})" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="editOneOnOne(${doc.id})" class="text-yellow-400 hover:text-yellow-300">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteOneOnOne(${doc.id})" class="text-red-600 hover:text-red-800">
+                        <button onclick="deleteOneOnOne(${doc.id})" class="text-red-400 hover:text-red-300">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
                 <div class="space-y-2">
                     <div>
-                        <p class="text-sm font-semibold text-gray-700">Topics:</p>
-                        <p class="text-gray-700">${escapeHtml(doc.topics)}</p>
+                        <p class="text-sm font-semibold text-yellow-400">Topics:</p>
+                        <p class="text-gray-300">${escapeHtml(doc.topics)}</p>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-gray-700">Notes:</p>
-                        <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(doc.notes)}</p>
+                        <p class="text-sm font-semibold text-yellow-400">Notes:</p>
+                        <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(doc.notes)}</p>
                     </div>
                     ${doc.action_items ? `
                         <div>
-                            <p class="text-sm font-semibold text-gray-700">Action Items:</p>
-                            <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(doc.action_items)}</p>
+                            <p class="text-sm font-semibold text-yellow-400">Action Items:</p>
+                            <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(doc.action_items)}</p>
                         </div>
                     ` : ''}
                 </div>
-                <p class="text-xs text-gray-400 mt-2">
+                <p class="text-xs text-gray-500 mt-2">
                     <i class="far fa-clock mr-1"></i>Updated: ${formatDate(doc.updated_at)}
                 </p>
             </div>
@@ -600,7 +645,7 @@ function formatDate(dateString) {
 function showSuccess(message) {
     // Simple success notification
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.className = 'fixed top-4 right-4 bg-yellow-400 text-black px-6 py-3 rounded-lg shadow-xl z-50 font-semibold border-2 border-black';
     notification.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${message}`;
     document.body.appendChild(notification);
     
@@ -612,7 +657,7 @@ function showSuccess(message) {
 function showError(message) {
     // Simple error notification
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-xl z-50 font-semibold border-2 border-black';
     notification.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${message}`;
     document.body.appendChild(notification);
     

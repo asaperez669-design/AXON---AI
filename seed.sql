@@ -11,10 +11,12 @@ INSERT OR IGNORE INTO customer_documents (document_name, document_type, document
   ('Global Solutions - Contract', 'Contract', 'Annual subscription with quarterly reviews and dedicated account manager.', 'Global Solutions');
 
 -- Sample Territory Plans
-INSERT OR IGNORE INTO territory_plans (plan_name, territory_name, plan_content, status) VALUES 
-  ('Q1 2024 Northeast Plan', 'Northeast', 'Target: 15 new accounts, $2M revenue. Focus on financial services and healthcare sectors.', 'active'),
-  ('Q1 2024 West Coast Plan', 'West Coast', 'Target: 20 new accounts, $3M revenue. Focus on tech startups and SaaS companies.', 'active'),
-  ('Q2 2024 Midwest Plan', 'Midwest', 'Target: 12 new accounts, $1.5M revenue. Focus on manufacturing and logistics.', 'draft');
+INSERT OR IGNORE INTO territory_plans (plan_name, territory_name, plan_content, status, account_type) VALUES 
+  ('Q1 2024 Northeast Plan - Growth', 'Northeast', 'Target: 10 renewal accounts, $1.5M revenue. Focus on expanding existing relationships in financial services.', 'active', 'growth'),
+  ('Q1 2024 Northeast Plan - Acquisition', 'Northeast', 'Target: 15 new accounts, $2M revenue. Focus on net new prospects in healthcare sector.', 'active', 'acquisition'),
+  ('Q1 2024 West Coast Plan - Growth', 'West Coast', 'Target: 8 rewrite/renewal accounts, $1.8M revenue. Upsell to tech startups currently on basic plans.', 'active', 'growth'),
+  ('Q1 2024 West Coast Plan - Acquisition', 'West Coast', 'Target: 20 new accounts, $3M revenue. Focus on net new SaaS companies and scale-ups.', 'active', 'acquisition'),
+  ('Q2 2024 Midwest Plan', 'Midwest', 'Target: 12 new accounts, $1.5M revenue. Focus on manufacturing and logistics.', 'draft', 'acquisition');
 
 -- Sample 1:1 Documents
 INSERT OR IGNORE INTO one_on_one_docs (manager_name, meeting_date, topics, notes, action_items) VALUES 

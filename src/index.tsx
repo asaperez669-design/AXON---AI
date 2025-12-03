@@ -181,11 +181,11 @@ app.get('/api/plans/:id', async (c) => {
 
 app.post('/api/plans', async (c) => {
   try {
-    const { plan_name, territory_name, plan_content, status } = await c.req.json()
+    const { plan_name, territory_name, plan_content, status, account_type } = await c.req.json()
     
     const result = await c.env.DB.prepare(
-      'INSERT INTO territory_plans (plan_name, territory_name, plan_content, status) VALUES (?, ?, ?, ?)'
-    ).bind(plan_name, territory_name, plan_content, status || 'draft').run()
+      'INSERT INTO territory_plans (plan_name, territory_name, plan_content, status, account_type) VALUES (?, ?, ?, ?, ?)'
+    ).bind(plan_name, territory_name, plan_content, status || 'draft', account_type || 'growth').run()
     
     return c.json({ success: true, id: result.meta.last_row_id })
   } catch (error) {
@@ -196,11 +196,11 @@ app.post('/api/plans', async (c) => {
 app.put('/api/plans/:id', async (c) => {
   try {
     const id = c.req.param('id')
-    const { plan_name, territory_name, plan_content, status } = await c.req.json()
+    const { plan_name, territory_name, plan_content, status, account_type } = await c.req.json()
     
     await c.env.DB.prepare(
-      'UPDATE territory_plans SET plan_name = ?, territory_name = ?, plan_content = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    ).bind(plan_name, territory_name, plan_content, status, id).run()
+      'UPDATE territory_plans SET plan_name = ?, territory_name = ?, plan_content = ?, status = ?, account_type = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(plan_name, territory_name, plan_content, status, account_type, id).run()
     
     return c.json({ success: true })
   } catch (error) {
@@ -296,13 +296,34 @@ app.get('/', (c) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Workflow - Sales Platform</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            axon: {
+                                black: '#000000',
+                                yellow: '#FFCC00',
+                                'yellow-dark': '#E6B800'
+                            }
+                        }
+                    }
+                }
+            }
+        </script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <style>
+            body { background-color: #1a1a1a; }
             .tab-content { display: none; }
             .tab-content.active { display: block; }
             .tab-button.active { 
-                background-color: #2563eb; 
-                color: white; 
+                background-color: #FFCC00; 
+                color: #000000;
+                font-weight: 700;
+            }
+            .tab-button:hover:not(.active) {
+                background-color: #333333;
+                color: #FFCC00;
             }
             .modal {
                 display: none;
@@ -313,52 +334,73 @@ app.get('/', (c) => {
                 width: 100%;
                 height: 100%;
                 overflow: auto;
-                background-color: rgba(0,0,0,0.4);
+                background-color: rgba(0,0,0,0.7);
             }
             .modal.active { display: flex; }
             .modal-content {
-                background-color: #fefefe;
+                background-color: #1a1a1a;
                 margin: auto;
                 padding: 20px;
-                border: 1px solid #888;
+                border: 2px solid #FFCC00;
                 border-radius: 8px;
                 max-width: 600px;
                 width: 90%;
                 max-height: 90vh;
                 overflow-y: auto;
+                color: white;
             }
             textarea {
                 min-height: 100px;
             }
+            input, textarea, select {
+                background-color: #2a2a2a;
+                border-color: #444;
+                color: white;
+            }
+            input:focus, textarea:focus, select:focus {
+                border-color: #FFCC00;
+                ring-color: #FFCC00;
+            }
+            label {
+                color: #FFCC00;
+            }
+            .filter-button {
+                transition: all 0.2s;
+            }
+            .filter-button.active {
+                background-color: #FFCC00;
+                color: #000000;
+                font-weight: 600;
+            }
         </style>
     </head>
-    <body class="bg-gray-50">
+    <body class="bg-gray-900">
         <div class="min-h-screen">
             <!-- Header -->
-            <header class="bg-blue-600 text-white p-4 shadow-lg">
+            <header class="bg-black text-white p-4 shadow-lg border-b-4 border-yellow-400">
                 <div class="max-w-7xl mx-auto">
-                    <h1 class="text-3xl font-bold">
+                    <h1 class="text-3xl font-bold text-yellow-400">
                         <i class="fas fa-briefcase mr-2"></i>
                         Workflow - Sales Platform
                     </h1>
-                    <p class="text-blue-100 mt-1">Streamline your sales operations</p>
+                    <p class="text-gray-300 mt-1">Streamline your sales operations</p>
                 </div>
             </header>
 
             <!-- Tab Navigation -->
-            <div class="bg-white shadow">
+            <div class="bg-black shadow border-b border-gray-700">
                 <div class="max-w-7xl mx-auto px-4">
                     <nav class="flex space-x-1 py-2">
-                        <button onclick="switchTab('notes')" class="tab-button active px-6 py-3 rounded-t-lg font-medium transition-colors">
+                        <button onclick="switchTab('notes')" class="tab-button active px-6 py-3 rounded-t-lg font-medium transition-colors text-black bg-yellow-400">
                             <i class="fas fa-sticky-note mr-2"></i>Account Notes
                         </button>
-                        <button onclick="switchTab('documents')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors hover:bg-gray-100">
+                        <button onclick="switchTab('documents')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors text-gray-300">
                             <i class="fas fa-file-alt mr-2"></i>Documents
                         </button>
-                        <button onclick="switchTab('plans')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors hover:bg-gray-100">
+                        <button onclick="switchTab('plans')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors text-gray-300">
                             <i class="fas fa-map mr-2"></i>Territory Plans
                         </button>
-                        <button onclick="switchTab('oneononedocs')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors hover:bg-gray-100">
+                        <button onclick="switchTab('oneononedocs')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors text-gray-300">
                             <i class="fas fa-users mr-2"></i>1:1 Documents
                         </button>
                     </nav>
@@ -369,10 +411,10 @@ app.get('/', (c) => {
             <div class="max-w-7xl mx-auto p-6">
                 <!-- Account Notes Tab -->
                 <div id="notes-tab" class="tab-content active">
-                    <div class="bg-white rounded-lg shadow p-6">
+                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">Account Notes</h2>
-                            <button onclick="openNoteModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            <h2 class="text-2xl font-bold text-yellow-400">Account Notes</h2>
+                            <button onclick="openNoteModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
                                 <i class="fas fa-plus mr-2"></i>New Note
                             </button>
                         </div>
@@ -384,10 +426,10 @@ app.get('/', (c) => {
 
                 <!-- Documents Tab -->
                 <div id="documents-tab" class="tab-content">
-                    <div class="bg-white rounded-lg shadow p-6">
+                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">Customer Documents</h2>
-                            <button onclick="openDocumentModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            <h2 class="text-2xl font-bold text-yellow-400">Customer Documents</h2>
+                            <button onclick="openDocumentModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
                                 <i class="fas fa-plus mr-2"></i>New Document
                             </button>
                         </div>
@@ -399,12 +441,25 @@ app.get('/', (c) => {
 
                 <!-- Territory Plans Tab -->
                 <div id="plans-tab" class="tab-content">
-                    <div class="bg-white rounded-lg shadow p-6">
+                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">Territory Plans</h2>
-                            <button onclick="openPlanModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                <i class="fas fa-plus mr-2"></i>New Plan
-                            </button>
+                            <h2 class="text-2xl font-bold text-yellow-400">Territory Plans</h2>
+                            <div class="flex items-center space-x-4">
+                                <div class="flex space-x-2">
+                                    <button onclick="filterPlans('all')" class="filter-button active px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-yellow-400 text-black" data-filter="all">
+                                        All Plans
+                                    </button>
+                                    <button onclick="filterPlans('growth')" class="filter-button px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="growth">
+                                        <i class="fas fa-chart-line mr-1"></i>Growth
+                                    </button>
+                                    <button onclick="filterPlans('acquisition')" class="filter-button px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="acquisition">
+                                        <i class="fas fa-plus-circle mr-1"></i>Acquisition
+                                    </button>
+                                </div>
+                                <button onclick="openPlanModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>New Plan
+                                </button>
+                            </div>
                         </div>
                         <div id="plans-list" class="space-y-4">
                             <!-- Plans will be loaded here -->
@@ -414,10 +469,10 @@ app.get('/', (c) => {
 
                 <!-- 1:1 Documents Tab -->
                 <div id="oneononedocs-tab" class="tab-content">
-                    <div class="bg-white rounded-lg shadow p-6">
+                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">1:1 Documents</h2>
-                            <button onclick="openOneOnOneModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            <h2 class="text-2xl font-bold text-yellow-400">1:1 Documents</h2>
+                            <button onclick="openOneOnOneModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
                                 <i class="fas fa-plus mr-2"></i>New 1:1
                             </button>
                         </div>
@@ -433,28 +488,28 @@ app.get('/', (c) => {
         <div id="note-modal" class="modal">
             <div class="modal-content">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold" id="note-modal-title">New Account Note</h3>
-                    <button onclick="closeNoteModal()" class="text-gray-500 hover:text-gray-700">
+                    <h3 class="text-xl font-bold text-yellow-400" id="note-modal-title">New Account Note</h3>
+                    <button onclick="closeNoteModal()" class="text-yellow-400 hover:text-yellow-300">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <form id="note-form" class="space-y-4">
                     <input type="hidden" id="note-id">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
-                        <input type="text" id="note-account" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Account Name</label>
+                        <input type="text" id="note-account" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Note Title</label>
-                        <input type="text" id="note-title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Note Title</label>
+                        <input type="text" id="note-title" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Note Content</label>
-                        <textarea id="note-content" required rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        <label class="block text-sm font-semibold mb-1">Note Content</label>
+                        <textarea id="note-content" required rows="5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
                     </div>
                     <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closeNoteModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                        <button type="button" onclick="closeNoteModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
                     </div>
                 </form>
             </div>
@@ -464,20 +519,20 @@ app.get('/', (c) => {
         <div id="document-modal" class="modal">
             <div class="modal-content">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold" id="document-modal-title">New Document</h3>
-                    <button onclick="closeDocumentModal()" class="text-gray-500 hover:text-gray-700">
+                    <h3 class="text-xl font-bold text-yellow-400" id="document-modal-title">New Document</h3>
+                    <button onclick="closeDocumentModal()" class="text-yellow-400 hover:text-yellow-300">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <form id="document-form" class="space-y-4">
                     <input type="hidden" id="document-id">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Document Name</label>
-                        <input type="text" id="document-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Document Name</label>
+                        <input type="text" id="document-name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
-                        <select id="document-type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Document Type</label>
+                        <select id="document-type" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                             <option value="">Select type...</option>
                             <option value="Proposal">Proposal</option>
                             <option value="Contract">Contract</option>
@@ -487,16 +542,16 @@ app.get('/', (c) => {
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Name (Optional)</label>
-                        <input type="text" id="document-account" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Account Name (Optional)</label>
+                        <input type="text" id="document-account" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Document Content</label>
-                        <textarea id="document-content" required rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        <label class="block text-sm font-semibold mb-1">Document Content</label>
+                        <textarea id="document-content" required rows="5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
                     </div>
                     <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closeDocumentModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                        <button type="button" onclick="closeDocumentModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
                     </div>
                 </form>
             </div>
@@ -506,36 +561,47 @@ app.get('/', (c) => {
         <div id="plan-modal" class="modal">
             <div class="modal-content">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold" id="plan-modal-title">New Territory Plan</h3>
-                    <button onclick="closePlanModal()" class="text-gray-500 hover:text-gray-700">
+                    <h3 class="text-xl font-bold text-yellow-400" id="plan-modal-title">New Territory Plan</h3>
+                    <button onclick="closePlanModal()" class="text-yellow-400 hover:text-yellow-300">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <form id="plan-form" class="space-y-4">
                     <input type="hidden" id="plan-id">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Plan Name</label>
-                        <input type="text" id="plan-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Plan Name</label>
+                        <input type="text" id="plan-name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Territory Name</label>
-                        <input type="text" id="plan-territory" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Territory Name</label>
+                        <input type="text" id="plan-territory" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select id="plan-status" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Account Type</label>
+                        <select id="plan-account-type" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                            <option value="growth">Growth (Renewals, Rewrites, Expansions)</option>
+                            <option value="acquisition">Acquisition (Net New)</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">
+                            <strong>Growth:</strong> Existing customers (renewals, rewrites, upsells) | 
+                            <strong>Acquisition:</strong> Net new prospects
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Status</label>
+                        <select id="plan-status" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                             <option value="draft">Draft</option>
                             <option value="active">Active</option>
                             <option value="completed">Completed</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Plan Content</label>
-                        <textarea id="plan-content" required rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        <label class="block text-sm font-semibold mb-1">Plan Content</label>
+                        <textarea id="plan-content" required rows="8" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
                     </div>
                     <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closePlanModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                        <button type="button" onclick="closePlanModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
                     </div>
                 </form>
             </div>
@@ -545,36 +611,36 @@ app.get('/', (c) => {
         <div id="oneonone-modal" class="modal">
             <div class="modal-content">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold" id="oneonone-modal-title">New 1:1 Document</h3>
-                    <button onclick="closeOneOnOneModal()" class="text-gray-500 hover:text-gray-700">
+                    <h3 class="text-xl font-bold text-yellow-400" id="oneonone-modal-title">New 1:1 Document</h3>
+                    <button onclick="closeOneOnOneModal()" class="text-yellow-400 hover:text-yellow-300">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <form id="oneonone-form" class="space-y-4">
                     <input type="hidden" id="oneonone-id">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Manager Name</label>
-                        <input type="text" id="oneonone-manager" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Manager Name</label>
+                        <input type="text" id="oneonone-manager" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Meeting Date</label>
-                        <input type="date" id="oneonone-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label class="block text-sm font-semibold mb-1">Meeting Date</label>
+                        <input type="date" id="oneonone-date" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Topics</label>
-                        <input type="text" id="oneonone-topics" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Comma-separated topics">
+                        <label class="block text-sm font-semibold mb-1">Topics</label>
+                        <input type="text" id="oneonone-topics" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400" placeholder="Comma-separated topics">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                        <textarea id="oneonone-notes" required rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        <label class="block text-sm font-semibold mb-1">Notes</label>
+                        <textarea id="oneonone-notes" required rows="5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Action Items (Optional)</label>
-                        <textarea id="oneonone-actions" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        <label class="block text-sm font-semibold mb-1">Action Items (Optional)</label>
+                        <textarea id="oneonone-actions" rows="3" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
                     </div>
                     <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closeOneOnOneModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                        <button type="button" onclick="closeOneOnOneModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
                     </div>
                 </form>
             </div>
