@@ -23,6 +23,12 @@ function switchTab(tabName) {
 // Load data based on current tab
 function loadTabData(tabName) {
     switch(tabName) {
+        case 'accounts':
+            loadAccounts();
+            break;
+        case 'tasks':
+            loadTasks();
+            break;
         case 'notes':
             loadNotes();
             break;
@@ -37,6 +43,425 @@ function loadTabData(tabName) {
             break;
     }
 }
+
+// ============ Accounts Functions ============
+let currentAccountId = null;
+
+async function loadAccounts() {
+    try {
+        const response = await axios.get('/api/accounts');
+        const accounts = response.data.data || [];
+        
+        const accountsList = document.getElementById('accounts-list');
+        if (accounts.length === 0) {
+            accountsList.innerHTML = '<p class="text-gray-400 text-center py-8">No accounts yet. Create your first account!</p>';
+            return;
+        }
+        
+        accountsList.innerHTML = accounts.map(account => `
+            <div class="card rounded-xl p-6 hover:shadow-2xl transition-all cursor-pointer" onclick="viewAccountDetails(${account.id})">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-lg text-white mb-2">${escapeHtml(account.account_name)}</h3>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            ${account.company_type ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                ${escapeHtml(account.company_type)}
+                            </span>` : ''}
+                            ${account.industry ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                ${escapeHtml(account.industry)}
+                            </span>` : ''}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+                                <i class="fas fa-check-circle mr-1"></i>${escapeHtml(account.status)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="event.stopPropagation(); editAccount(${account.id})" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteAccount(${account.id})" class="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <p class="text-xs text-gray-500 flex items-center">
+                        <i class="far fa-clock mr-1.5"></i>Created ${formatDate(account.created_at)}
+                    </p>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading accounts:', error);
+        showError('Failed to load accounts');
+    }
+}
+
+async function viewAccountDetails(accountId) {
+    currentAccountId = accountId;
+    
+    try {
+        const [accountResponse, notesResponse] = await Promise.all([
+            axios.get(`/api/accounts/${accountId}`),
+            axios.get(`/api/accounts/${accountId}/notes`)
+        ]);
+        
+        const account = accountResponse.data.data;
+        const notes = notesResponse.data.data || [];
+        
+        const accountsList = document.getElementById('accounts-list');
+        accountsList.innerHTML = `
+            <div class="mb-6">
+                <button onclick="loadAccounts()" class="text-gray-400 hover:text-yellow-400 transition-colors mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Accounts
+                </button>
+                <div class="card rounded-xl p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-3xl font-bold text-white mb-3">${escapeHtml(account.account_name)}</h3>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                ${account.company_type ? `<span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                    ${escapeHtml(account.company_type)}
+                                </span>` : ''}
+                                ${account.industry ? `<span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                    ${escapeHtml(account.industry)}
+                                </span>` : ''}
+                            </div>
+                        </div>
+                        <button onclick="openAccountNoteModal(${accountId})" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
+                            <i class="fas fa-plus mr-2"></i>Add Note
+                        </button>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h4 class="text-xl font-semibold text-white mb-4">Notes</h4>
+                        <div class="space-y-4">
+                            ${notes.length === 0 ? '<p class="text-gray-400 text-center py-8">No notes yet. Add your first note!</p>' : notes.map(note => `
+                                <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h5 class="font-semibold text-white">${escapeHtml(note.note_title)}</h5>
+                                        <span class="text-xs text-gray-500">${formatDate(note.created_at)}</span>
+                                    </div>
+                                    <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(note.note_content)}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading account details:', error);
+        showError('Failed to load account details');
+    }
+}
+
+function openAccountModal(accountId = null) {
+    const modal = document.getElementById('account-modal');
+    const form = document.getElementById('account-form');
+    const title = document.getElementById('account-modal-title');
+    
+    form.reset();
+    document.getElementById('account-id').value = '';
+    
+    if (accountId) {
+        title.textContent = 'Edit Account';
+        loadAccountForEdit(accountId);
+    } else {
+        title.textContent = 'New Account';
+    }
+    
+    modal.classList.add('active');
+}
+
+function closeAccountModal() {
+    document.getElementById('account-modal').classList.remove('active');
+}
+
+async function loadAccountForEdit(id) {
+    try {
+        const response = await axios.get(`/api/accounts/${id}`);
+        const account = response.data.data;
+        
+        document.getElementById('account-id').value = account.id;
+        document.getElementById('account-name').value = account.account_name;
+        document.getElementById('account-company-type').value = account.company_type || '';
+        document.getElementById('account-industry').value = account.industry || '';
+    } catch (error) {
+        console.error('Error loading account:', error);
+        showError('Failed to load account');
+    }
+}
+
+function editAccount(id) {
+    openAccountModal(id);
+}
+
+async function deleteAccount(id) {
+    if (!confirm('Are you sure you want to delete this account? All associated notes will also be deleted.')) return;
+    
+    try {
+        await axios.delete(`/api/accounts/${id}`);
+        loadAccounts();
+        showSuccess('Account deleted successfully');
+    } catch (error) {
+        console.error('Error deleting account:', error);
+        showError('Failed to delete account');
+    }
+}
+
+document.getElementById('account-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const id = document.getElementById('account-id').value;
+    const data = {
+        account_name: document.getElementById('account-name').value,
+        company_type: document.getElementById('account-company-type').value,
+        industry: document.getElementById('account-industry').value,
+        status: 'active'
+    };
+    
+    try {
+        if (id) {
+            await axios.put(`/api/accounts/${id}`, data);
+            showSuccess('Account updated successfully');
+        } else {
+            await axios.post('/api/accounts', data);
+            showSuccess('Account created successfully');
+        }
+        
+        closeAccountModal();
+        loadAccounts();
+    } catch (error) {
+        console.error('Error saving account:', error);
+        showError('Failed to save account');
+    }
+});
+
+// Account Note Modal Functions
+function openAccountNoteModal(accountId) {
+    currentAccountId = accountId;
+    const modal = document.getElementById('account-note-modal');
+    const form = document.getElementById('account-note-form');
+    
+    form.reset();
+    document.getElementById('account-note-account-id').value = accountId;
+    
+    modal.classList.add('active');
+}
+
+function closeAccountNoteModal() {
+    document.getElementById('account-note-modal').classList.remove('active');
+}
+
+document.getElementById('account-note-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const accountId = document.getElementById('account-note-account-id').value;
+    const data = {
+        note_title: document.getElementById('account-note-title').value,
+        note_content: document.getElementById('account-note-content').value
+    };
+    
+    try {
+        await axios.post(`/api/accounts/${accountId}/notes`, data);
+        showSuccess('Note added successfully');
+        closeAccountNoteModal();
+        viewAccountDetails(accountId);
+    } catch (error) {
+        console.error('Error saving note:', error);
+        showError('Failed to save note');
+    }
+});
+
+// ============ Tasks Functions ============
+async function loadTasks() {
+    try {
+        const response = await axios.get('/api/tasks');
+        const tasks = response.data.data || [];
+        
+        const tasksList = document.getElementById('tasks-list');
+        if (tasks.length === 0) {
+            tasksList.innerHTML = '<p class="text-gray-400 text-center py-8">No tasks yet. Create your first task!</p>';
+            return;
+        }
+        
+        const pendingTasks = tasks.filter(t => t.status === 'pending');
+        const completedTasks = tasks.filter(t => t.status === 'completed');
+        
+        tasksList.innerHTML = `
+            ${pendingTasks.length > 0 ? `
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i class="fas fa-list-check mr-2 text-yellow-400"></i>
+                        Pending Tasks (${pendingTasks.length})
+                    </h3>
+                    <div class="space-y-3">
+                        ${pendingTasks.map(task => renderTask(task)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${completedTasks.length > 0 ? `
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                        Completed Tasks (${completedTasks.length})
+                    </h3>
+                    <div class="space-y-3">
+                        ${completedTasks.map(task => renderTask(task)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+        showError('Failed to load tasks');
+    }
+}
+
+function renderTask(task) {
+    const priorityColors = {
+        low: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+        medium: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+        high: 'bg-red-500/20 text-red-400 border-red-500/30'
+    };
+    
+    const isCompleted = task.status === 'completed';
+    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !isCompleted;
+    
+    return `
+        <div class="card rounded-xl p-5 hover:shadow-2xl transition-all ${isCompleted ? 'opacity-60' : ''}">
+            <div class="flex items-start gap-4">
+                <button onclick="toggleTaskComplete(${task.id})" class="mt-1 flex-shrink-0">
+                    <div class="w-6 h-6 rounded-full border-2 ${isCompleted ? 'bg-green-500 border-green-500' : 'border-gray-600 hover:border-yellow-400'} flex items-center justify-center transition-colors">
+                        ${isCompleted ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
+                    </div>
+                </button>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-white ${isCompleted ? 'line-through' : ''}">${escapeHtml(task.task_title)}</h4>
+                            ${task.task_description ? `<p class="text-gray-400 text-sm mt-1">${escapeHtml(task.task_description)}</p>` : ''}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editTask(${task.id})" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteTask(${task.id})" class="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap mt-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority]} border capitalize">
+                            ${task.priority} priority
+                        </span>
+                        ${task.due_date ? `
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isOverdue ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-gray-700 text-gray-300 border border-gray-600'}">
+                                <i class="far fa-calendar mr-1.5"></i>${formatDate(task.due_date)}
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function toggleTaskComplete(id) {
+    try {
+        await axios.patch(`/api/tasks/${id}/toggle`);
+        loadTasks();
+    } catch (error) {
+        console.error('Error toggling task:', error);
+        showError('Failed to update task');
+    }
+}
+
+function openTaskModal(taskId = null) {
+    const modal = document.getElementById('task-modal');
+    const form = document.getElementById('task-form');
+    const title = document.getElementById('task-modal-title');
+    
+    form.reset();
+    document.getElementById('task-id').value = '';
+    
+    if (taskId) {
+        title.textContent = 'Edit Task';
+        loadTaskForEdit(taskId);
+    } else {
+        title.textContent = 'New Task';
+    }
+    
+    modal.classList.add('active');
+}
+
+function closeTaskModal() {
+    document.getElementById('task-modal').classList.remove('active');
+}
+
+async function loadTaskForEdit(id) {
+    try {
+        const response = await axios.get(`/api/tasks/${id}`);
+        const task = response.data.data;
+        
+        document.getElementById('task-id').value = task.id;
+        document.getElementById('task-title').value = task.task_title;
+        document.getElementById('task-description').value = task.task_description || '';
+        document.getElementById('task-priority').value = task.priority;
+        document.getElementById('task-due-date').value = task.due_date || '';
+    } catch (error) {
+        console.error('Error loading task:', error);
+        showError('Failed to load task');
+    }
+}
+
+function editTask(id) {
+    openTaskModal(id);
+}
+
+async function deleteTask(id) {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    
+    try {
+        await axios.delete(`/api/tasks/${id}`);
+        loadTasks();
+        showSuccess('Task deleted successfully');
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        showError('Failed to delete task');
+    }
+}
+
+document.getElementById('task-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const id = document.getElementById('task-id').value;
+    const data = {
+        task_title: document.getElementById('task-title').value,
+        task_description: document.getElementById('task-description').value,
+        priority: document.getElementById('task-priority').value,
+        due_date: document.getElementById('task-due-date').value || null,
+        status: 'pending'
+    };
+    
+    try {
+        if (id) {
+            await axios.put(`/api/tasks/${id}`, data);
+            showSuccess('Task updated successfully');
+        } else {
+            await axios.post('/api/tasks', data);
+            showSuccess('Task created successfully');
+        }
+        
+        closeTaskModal();
+        loadTasks();
+    } catch (error) {
+        console.error('Error saving task:', error);
+        showError('Failed to save task');
+    }
+});
 
 // ============ Account Notes Functions ============
 async function loadNotes() {
@@ -693,7 +1118,7 @@ function showError(message) {
     }, 3000);
 }
 
-// Initialize - Load notes by default
+// Initialize - Load accounts by default
 document.addEventListener('DOMContentLoaded', () => {
-    loadNotes();
+    loadAccounts();
 });

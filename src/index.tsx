@@ -286,6 +286,211 @@ app.delete('/api/oneononedocs/:id', async (c) => {
   }
 })
 
+// ============ Tasks API ============
+app.get('/api/tasks', async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM tasks ORDER BY due_date ASC, created_at DESC'
+    ).all()
+    return c.json({ success: true, data: results })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.get('/api/tasks/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM tasks WHERE id = ?'
+    ).bind(id).all()
+    
+    if (results.length === 0) {
+      return c.json({ success: false, error: 'Task not found' }, 404)
+    }
+    
+    return c.json({ success: true, data: results[0] })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.post('/api/tasks', async (c) => {
+  try {
+    const { task_title, task_description, priority, due_date } = await c.req.json()
+    
+    const result = await c.env.DB.prepare(
+      'INSERT INTO tasks (task_title, task_description, priority, due_date, status) VALUES (?, ?, ?, ?, ?)'
+    ).bind(task_title, task_description || '', priority || 'medium', due_date || null, 'pending').run()
+    
+    return c.json({ success: true, id: result.meta.last_row_id })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.put('/api/tasks/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { task_title, task_description, priority, due_date, status } = await c.req.json()
+    
+    const completed_at = status === 'completed' ? 'CURRENT_TIMESTAMP' : 'NULL'
+    
+    await c.env.DB.prepare(
+      `UPDATE tasks SET task_title = ?, task_description = ?, priority = ?, due_date = ?, status = ?, completed_at = ${completed_at}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    ).bind(task_title, task_description, priority, due_date, status, id).run()
+    
+    return c.json({ success: true })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.patch('/api/tasks/:id/toggle', async (c) => {
+  try {
+    const id = c.req.param('id')
+    
+    // Get current status
+    const { results } = await c.env.DB.prepare(
+      'SELECT status FROM tasks WHERE id = ?'
+    ).bind(id).all()
+    
+    if (results.length === 0) {
+      return c.json({ success: false, error: 'Task not found' }, 404)
+    }
+    
+    const currentStatus = results[0].status
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
+    const completed_at = newStatus === 'completed' ? 'CURRENT_TIMESTAMP' : 'NULL'
+    
+    await c.env.DB.prepare(
+      `UPDATE tasks SET status = ?, completed_at = ${completed_at}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    ).bind(newStatus, id).run()
+    
+    return c.json({ success: true, status: newStatus })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.delete('/api/tasks/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    await c.env.DB.prepare('DELETE FROM tasks WHERE id = ?').bind(id).run()
+    return c.json({ success: true })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// ============ Accounts API ============
+app.get('/api/accounts', async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM accounts ORDER BY account_name ASC'
+    ).all()
+    return c.json({ success: true, data: results })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.get('/api/accounts/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM accounts WHERE id = ?'
+    ).bind(id).all()
+    
+    if (results.length === 0) {
+      return c.json({ success: false, error: 'Account not found' }, 404)
+    }
+    
+    return c.json({ success: true, data: results[0] })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.get('/api/accounts/:id/notes', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM account_notes WHERE account_id = ? ORDER BY updated_at DESC'
+    ).bind(id).all()
+    
+    return c.json({ success: true, data: results })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.post('/api/accounts', async (c) => {
+  try {
+    const { account_name, company_type, industry } = await c.req.json()
+    
+    const result = await c.env.DB.prepare(
+      'INSERT INTO accounts (account_name, company_type, industry, status) VALUES (?, ?, ?, ?)'
+    ).bind(account_name, company_type || '', industry || '', 'active').run()
+    
+    return c.json({ success: true, id: result.meta.last_row_id })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.put('/api/accounts/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { account_name, company_type, industry, status } = await c.req.json()
+    
+    await c.env.DB.prepare(
+      'UPDATE accounts SET account_name = ?, company_type = ?, industry = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(account_name, company_type, industry, status, id).run()
+    
+    return c.json({ success: true })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+app.delete('/api/accounts/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    await c.env.DB.prepare('DELETE FROM accounts WHERE id = ?').bind(id).run()
+    return c.json({ success: true })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// Update notes POST to include account_id
+app.post('/api/accounts/:accountId/notes', async (c) => {
+  try {
+    const accountId = c.req.param('accountId')
+    const { note_title, note_content } = await c.req.json()
+    
+    // Get account name
+    const { results: accountResults } = await c.env.DB.prepare(
+      'SELECT account_name FROM accounts WHERE id = ?'
+    ).bind(accountId).all()
+    
+    if (accountResults.length === 0) {
+      return c.json({ success: false, error: 'Account not found' }, 404)
+    }
+    
+    const account_name = accountResults[0].account_name
+    
+    const result = await c.env.DB.prepare(
+      'INSERT INTO account_notes (account_name, note_title, note_content, account_id) VALUES (?, ?, ?, ?)'
+    ).bind(account_name, note_title, note_content, accountId).run()
+    
+    return c.json({ success: true, id: result.meta.last_row_id })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 // ============ Main Page ============
 app.get('/', (c) => {
   return c.html(`
@@ -516,17 +721,20 @@ app.get('/', (c) => {
             <!-- Tab Navigation -->
             <div class="bg-black/50 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-40">
                 <div class="max-w-7xl mx-auto px-6">
-                    <nav class="flex space-x-1">
-                        <button onclick="switchTab('notes')" class="tab-button active px-6 py-4 font-medium transition-colors">
-                            <i class="fas fa-sticky-note mr-2"></i>Account Notes
+                    <nav class="flex space-x-1 overflow-x-auto">
+                        <button onclick="switchTab('accounts')" class="tab-button active px-6 py-4 font-medium transition-colors whitespace-nowrap">
+                            <i class="fas fa-building mr-2"></i>Accounts
                         </button>
-                        <button onclick="switchTab('documents')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400">
+                        <button onclick="switchTab('tasks')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400 whitespace-nowrap">
+                            <i class="fas fa-tasks mr-2"></i>Tasks
+                        </button>
+                        <button onclick="switchTab('documents')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400 whitespace-nowrap">
                             <i class="fas fa-file-alt mr-2"></i>Documents
                         </button>
-                        <button onclick="switchTab('plans')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400">
+                        <button onclick="switchTab('plans')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400 whitespace-nowrap">
                             <i class="fas fa-map mr-2"></i>Territory Plans
                         </button>
-                        <button onclick="switchTab('oneononedocs')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400">
+                        <button onclick="switchTab('oneononedocs')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400 whitespace-nowrap">
                             <i class="fas fa-users mr-2"></i>1:1 Documents
                         </button>
                     </nav>
@@ -535,20 +743,38 @@ app.get('/', (c) => {
 
             <!-- Tab Content -->
             <div class="max-w-7xl mx-auto px-6 py-8">
-                <!-- Account Notes Tab -->
-                <div id="notes-tab" class="tab-content active">
+                <!-- Accounts Tab -->
+                <div id="accounts-tab" class="tab-content active">
                     <div class="card rounded-2xl shadow-2xl p-8">
                         <div class="flex justify-between items-center mb-8">
                             <div>
-                                <h2 class="text-2xl font-bold text-white mb-1">Account Notes</h2>
-                                <p class="text-gray-400 text-sm">Track important customer interactions</p>
+                                <h2 class="text-2xl font-bold text-white mb-1">Accounts</h2>
+                                <p class="text-gray-400 text-sm">Manage customer accounts and their notes</p>
                             </div>
-                            <button onclick="openNoteModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
-                                <i class="fas fa-plus mr-2"></i>New Note
+                            <button onclick="openAccountModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
+                                <i class="fas fa-plus mr-2"></i>New Account
                             </button>
                         </div>
-                        <div id="notes-list" class="space-y-4">
-                            <!-- Notes will be loaded here -->
+                        <div id="accounts-list" class="space-y-4">
+                            <!-- Accounts will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks Tab -->
+                <div id="tasks-tab" class="tab-content">
+                    <div class="card rounded-2xl shadow-2xl p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-1">Tasks</h2>
+                                <p class="text-gray-400 text-sm">Manage and complete your sales tasks</p>
+                            </div>
+                            <button onclick="openTaskModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
+                                <i class="fas fa-plus mr-2"></i>New Task
+                            </button>
+                        </div>
+                        <div id="tasks-list" class="space-y-4">
+                            <!-- Tasks will be loaded here -->
                         </div>
                     </div>
                 </div>
@@ -650,6 +876,119 @@ app.get('/', (c) => {
                     </div>
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" onclick="closeNoteModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Note</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Modal -->
+        <div id="account-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="account-modal-title">New Account</h3>
+                        <p class="text-gray-400 text-sm mt-1">Create a customer account</p>
+                    </div>
+                    <button onclick="closeAccountModal()" class="text-gray-400 hover:text-white transition-colors p-2">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="account-form" class="space-y-5">
+                    <input type="hidden" id="account-id">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Account Name</label>
+                        <input type="text" id="account-name" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Company Type</label>
+                        <select id="account-company-type" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                            <option value="">Select type...</option>
+                            <option value="Enterprise">Enterprise</option>
+                            <option value="Mid-Market">Mid-Market</option>
+                            <option value="SMB">Small Business</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Industry</label>
+                        <input type="text" id="account-industry" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="e.g., Technology, Healthcare">
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeAccountModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Task Modal -->
+        <div id="task-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="task-modal-title">New Task</h3>
+                        <p class="text-gray-400 text-sm mt-1">Create a task to track</p>
+                    </div>
+                    <button onclick="closeTaskModal()" class="text-gray-400 hover:text-white transition-colors p-2">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="task-form" class="space-y-5">
+                    <input type="hidden" id="task-id">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Task Title</label>
+                        <input type="text" id="task-title" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Description</label>
+                        <textarea id="task-description" rows="3" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Priority</label>
+                            <select id="task-priority" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Due Date</label>
+                            <input type="date" id="task-due-date" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeTaskModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Notes Modal (for adding notes to an account) -->
+        <div id="account-note-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="account-note-modal-title">New Note</h3>
+                        <p class="text-gray-400 text-sm mt-1">Add a note to this account</p>
+                    </div>
+                    <button onclick="closeAccountNoteModal()" class="text-gray-400 hover:text-white transition-colors p-2">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="account-note-form" class="space-y-5">
+                    <input type="hidden" id="account-note-account-id">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Note Title</label>
+                        <input type="text" id="account-note-title" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Note Content</label>
+                        <textarea id="account-note-content" required rows="5" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeAccountNoteModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
                         <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Note</button>
                     </div>
                 </form>

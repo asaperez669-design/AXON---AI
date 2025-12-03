@@ -1,8 +1,22 @@
--- Sample Account Notes
-INSERT OR IGNORE INTO account_notes (account_name, note_title, note_content) VALUES 
-  ('Acme Corp', 'Initial Meeting Notes', 'Discussed Q4 requirements. They are interested in our enterprise package. Follow up next week with proposal.'),
-  ('TechStart Inc', 'Product Demo Feedback', 'Very impressed with the analytics dashboard. Requested custom integration with their CRM system.'),
-  ('Global Solutions', 'Contract Renewal Discussion', 'Contract expires in 2 months. They want to expand to 3 more departments. Prepare expansion proposal.');
+-- Sample Accounts
+INSERT OR IGNORE INTO accounts (id, account_name, company_type, industry, status) VALUES 
+  (1, 'Acme Corp', 'Enterprise', 'Manufacturing', 'active'),
+  (2, 'TechStart Inc', 'Mid-Market', 'Technology', 'active'),
+  (3, 'Global Solutions', 'Enterprise', 'Financial Services', 'active');
+
+-- Sample Account Notes (with account_id)
+INSERT OR IGNORE INTO account_notes (account_name, note_title, note_content, account_id) VALUES 
+  ('Acme Corp', 'Initial Meeting Notes', 'Discussed Q4 requirements. They are interested in our enterprise package. Follow up next week with proposal.', 1),
+  ('TechStart Inc', 'Product Demo Feedback', 'Very impressed with the analytics dashboard. Requested custom integration with their CRM system.', 2),
+  ('Global Solutions', 'Contract Renewal Discussion', 'Contract expires in 2 months. They want to expand to 3 more departments. Prepare expansion proposal.', 3);
+
+-- Sample Tasks
+INSERT OR IGNORE INTO tasks (task_title, task_description, status, priority, due_date) VALUES 
+  ('Follow up with Acme Corp', 'Send enterprise package proposal and pricing breakdown', 'pending', 'high', '2025-12-10'),
+  ('Schedule TechStart demo', 'Set up custom CRM integration demo with technical team', 'pending', 'high', '2025-12-08'),
+  ('Prepare Q1 forecast', 'Compile pipeline data and revenue projections for quarterly review', 'pending', 'medium', '2025-12-15'),
+  ('Update CRM records', 'Add new contacts from recent conferences', 'completed', 'low', '2025-12-01'),
+  ('Review contract terms', 'Legal review of Global Solutions expansion agreement', 'pending', 'high', '2025-12-12');
 
 -- Sample Customer Documents
 INSERT OR IGNORE INTO customer_documents (document_name, document_type, document_content, account_name) VALUES 
