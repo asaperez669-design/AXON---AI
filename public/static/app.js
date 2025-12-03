@@ -51,27 +51,31 @@ async function loadNotes() {
         }
         
         notesList.innerHTML = notes.map(note => `
-            <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900">
-                <div class="flex justify-between items-start mb-2">
+            <div class="card rounded-xl p-6 hover:shadow-2xl transition-all">
+                <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-yellow-400">${escapeHtml(note.note_title)}</h3>
-                        <p class="text-sm text-gray-300 font-medium">
-                            <i class="fas fa-building mr-1"></i>${escapeHtml(note.account_name)}
-                        </p>
+                        <h3 class="font-semibold text-lg text-white mb-2">${escapeHtml(note.note_title)}</h3>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-400/10 text-yellow-400 border border-yellow-400/20">
+                                <i class="fas fa-building mr-1.5"></i>${escapeHtml(note.account_name)}
+                            </span>
+                        </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editNote(${note.id})" class="text-yellow-400 hover:text-yellow-300">
+                        <button onclick="editNote(${note.id})" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteNote(${note.id})" class="text-red-400 hover:text-red-300">
+                        <button onclick="deleteNote(${note.id})" class="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(note.note_content)}</p>
-                <p class="text-xs text-gray-500 mt-2">
-                    <i class="far fa-clock mr-1"></i>Updated: ${formatDate(note.updated_at)}
-                </p>
+                <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(note.note_content)}</p>
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <p class="text-xs text-gray-500 flex items-center">
+                        <i class="far fa-clock mr-1.5"></i>Updated ${formatDate(note.updated_at)}
+                    </p>
+                </div>
             </div>
         `).join('');
     } catch (error) {
@@ -174,32 +178,34 @@ async function loadDocuments() {
         }
         
         documentsList.innerHTML = documents.map(doc => `
-            <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900">
-                <div class="flex justify-between items-start mb-2">
+            <div class="card rounded-xl p-6 hover:shadow-2xl transition-all">
+                <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-yellow-400">${escapeHtml(doc.document_name)}</h3>
-                        <div class="flex items-center space-x-3 mt-1">
-                            <span class="text-sm bg-yellow-400 text-black px-2 py-1 rounded font-semibold">
+                        <h3 class="font-semibold text-lg text-white mb-2">${escapeHtml(doc.document_name)}</h3>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-yellow-400 to-yellow-300 text-black">
                                 ${escapeHtml(doc.document_type)}
                             </span>
-                            ${doc.account_name ? `<span class="text-sm text-gray-300">
-                                <i class="fas fa-building mr-1"></i>${escapeHtml(doc.account_name)}
+                            ${doc.account_name ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                                <i class="fas fa-building mr-1.5"></i>${escapeHtml(doc.account_name)}
                             </span>` : ''}
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editDocument(${doc.id})" class="text-yellow-400 hover:text-yellow-300">
+                        <button onclick="editDocument(${doc.id})" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteDocument(${doc.id})" class="text-red-400 hover:text-red-300">
+                        <button onclick="deleteDocument(${doc.id})" class="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(doc.document_content)}</p>
-                <p class="text-xs text-gray-500 mt-2">
-                    <i class="far fa-clock mr-1"></i>Updated: ${formatDate(doc.updated_at)}
-                </p>
+                <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(doc.document_content)}</p>
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <p class="text-xs text-gray-500 flex items-center">
+                        <i class="far fa-clock mr-1.5"></i>Updated ${formatDate(doc.updated_at)}
+                    </p>
+                </div>
             </div>
         `).join('');
     } catch (error) {
@@ -312,14 +318,22 @@ async function loadPlans(filter = currentFilter) {
         
         plansList.innerHTML = plans.map(plan => {
             const statusColors = {
-                draft: 'bg-gray-700 text-gray-300',
-                active: 'bg-green-600 text-white',
-                completed: 'bg-blue-600 text-white'
+                draft: 'bg-gray-700/50 text-gray-300 border border-gray-600',
+                active: 'bg-green-500/20 text-green-400 border border-green-500/30',
+                completed: 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
             };
             
-            const accountTypeColors = {
-                growth: 'bg-blue-500 text-white',
-                acquisition: 'bg-green-500 text-white'
+            const accountTypeStyles = {
+                growth: {
+                    bg: 'bg-gradient-to-r from-blue-500 to-blue-400',
+                    border: 'border-blue-400/30',
+                    text: 'text-white'
+                },
+                acquisition: {
+                    bg: 'bg-gradient-to-r from-green-500 to-emerald-400',
+                    border: 'border-green-400/30',
+                    text: 'text-white'
+                }
             };
             
             const accountTypeIcons = {
@@ -332,36 +346,40 @@ async function loadPlans(filter = currentFilter) {
                 acquisition: 'Acquisition'
             };
             
+            const style = accountTypeStyles[plan.account_type];
+            
             return `
-                <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900" data-account-type="${plan.account_type}">
-                    <div class="flex justify-between items-start mb-2">
+                <div class="card rounded-xl p-6 hover:shadow-2xl transition-all" data-account-type="${plan.account_type}">
+                    <div class="flex justify-between items-start mb-4">
                         <div class="flex-1">
-                            <h3 class="font-bold text-lg text-yellow-400">${escapeHtml(plan.plan_name)}</h3>
-                            <div class="flex items-center space-x-2 mt-2">
-                                <span class="text-sm ${accountTypeColors[plan.account_type]} px-3 py-1 rounded-full font-semibold">
-                                    <i class="fas ${accountTypeIcons[plan.account_type]} mr-1"></i>${accountTypeLabels[plan.account_type]}
+                            <h3 class="font-semibold text-lg text-white mb-3">${escapeHtml(plan.plan_name)}</h3>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold ${style.bg} ${style.text} shadow-lg">
+                                    <i class="fas ${accountTypeIcons[plan.account_type]} mr-2"></i>${accountTypeLabels[plan.account_type]}
                                 </span>
-                                <span class="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                                    <i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(plan.territory_name)}
+                                <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                                    <i class="fas fa-map-marker-alt mr-1.5"></i>${escapeHtml(plan.territory_name)}
                                 </span>
-                                <span class="text-sm ${statusColors[plan.status]} px-2 py-1 rounded capitalize font-medium">
+                                <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium ${statusColors[plan.status]} capitalize">
                                     ${escapeHtml(plan.status)}
                                 </span>
                             </div>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="editPlan(${plan.id})" class="text-yellow-400 hover:text-yellow-300">
+                            <button onclick="editPlan(${plan.id})" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button onclick="deletePlan(${plan.id})" class="text-red-400 hover:text-red-300">
+                            <button onclick="deletePlan(${plan.id})" class="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <p class="text-gray-300 whitespace-pre-wrap mt-3">${escapeHtml(plan.plan_content)}</p>
-                    <p class="text-xs text-gray-500 mt-2">
-                        <i class="far fa-clock mr-1"></i>Updated: ${formatDate(plan.updated_at)}
-                    </p>
+                    <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(plan.plan_content)}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-800">
+                        <p class="text-xs text-gray-500 flex items-center">
+                            <i class="far fa-clock mr-1.5"></i>Updated ${formatDate(plan.updated_at)}
+                        </p>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -376,14 +394,16 @@ function filterPlans(filter) {
     
     // Update button states
     document.querySelectorAll('.filter-button').forEach(btn => {
-        btn.classList.remove('active', 'bg-yellow-400', 'text-black', 'font-semibold');
-        btn.classList.add('bg-gray-700', 'text-gray-300');
+        btn.classList.remove('active');
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.classList.add('bg-gray-800', 'text-gray-300');
     });
     
     const activeBtn = document.querySelector(`[data-filter="${filter}"]`);
     if (activeBtn) {
-        activeBtn.classList.add('active', 'bg-yellow-400', 'text-black', 'font-semibold');
-        activeBtn.classList.remove('bg-gray-700', 'text-gray-300');
+        activeBtn.classList.add('active');
+        activeBtn.classList.remove('bg-gray-800', 'text-gray-300');
     }
     
     loadPlans(filter);
@@ -487,46 +507,53 @@ async function loadOneOnOneDocs() {
         }
         
         docsList.innerHTML = docs.map(doc => `
-            <div class="border border-yellow-400 rounded-lg p-4 hover:shadow-xl transition-shadow bg-gray-900">
-                <div class="flex justify-between items-start mb-2">
+            <div class="card rounded-xl p-6 hover:shadow-2xl transition-all">
+                <div class="flex justify-between items-start mb-4">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-yellow-400">
-                            <i class="fas fa-user-tie mr-2"></i>${escapeHtml(doc.manager_name)}
-                        </h3>
-                        <div class="flex items-center space-x-3 mt-1">
-                            <span class="text-sm bg-yellow-400 text-black px-2 py-1 rounded font-semibold">
-                                <i class="far fa-calendar mr-1"></i>${formatDate(doc.meeting_date)}
-                            </span>
+                        <div class="flex items-center mb-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-300 flex items-center justify-center mr-4">
+                                <i class="fas fa-user-tie text-black text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-white">${escapeHtml(doc.manager_name)}</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 mt-1">
+                                    <i class="far fa-calendar mr-1.5"></i>${formatDate(doc.meeting_date)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editOneOnOne(${doc.id})" class="text-yellow-400 hover:text-yellow-300">
+                        <button onclick="editOneOnOne(${doc.id})" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteOneOnOne(${doc.id})" class="text-red-400 hover:text-red-300">
+                        <button onclick="deleteOneOnOne(${doc.id})" class="text-gray-400 hover:text-red-400 transition-colors p-2 hover:bg-gray-800 rounded-lg">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <div class="space-y-2">
+                <div class="space-y-4">
                     <div>
-                        <p class="text-sm font-semibold text-yellow-400">Topics:</p>
-                        <p class="text-gray-300">${escapeHtml(doc.topics)}</p>
+                        <p class="text-sm font-medium text-gray-400 mb-2">Topics</p>
+                        <p class="text-gray-300 leading-relaxed">${escapeHtml(doc.topics)}</p>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-yellow-400">Notes:</p>
-                        <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(doc.notes)}</p>
+                        <p class="text-sm font-medium text-gray-400 mb-2">Notes</p>
+                        <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(doc.notes)}</p>
                     </div>
                     ${doc.action_items ? `
-                        <div>
-                            <p class="text-sm font-semibold text-yellow-400">Action Items:</p>
-                            <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(doc.action_items)}</p>
+                        <div class="bg-yellow-400/5 border border-yellow-400/20 rounded-lg p-4">
+                            <p class="text-sm font-medium text-yellow-400 mb-2 flex items-center">
+                                <i class="fas fa-tasks mr-2"></i>Action Items
+                            </p>
+                            <p class="text-gray-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(doc.action_items)}</p>
                         </div>
                     ` : ''}
                 </div>
-                <p class="text-xs text-gray-500 mt-2">
-                    <i class="far fa-clock mr-1"></i>Updated: ${formatDate(doc.updated_at)}
-                </p>
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <p class="text-xs text-gray-500 flex items-center">
+                        <i class="far fa-clock mr-1.5"></i>Updated ${formatDate(doc.updated_at)}
+                    </p>
+                </div>
             </div>
         `).join('');
     } catch (error) {

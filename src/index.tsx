@@ -296,16 +296,25 @@ app.get('/', (c) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Workflow - Sales Platform</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <script>
             tailwind.config = {
                 theme: {
                     extend: {
                         colors: {
                             axon: {
-                                black: '#000000',
-                                yellow: '#FFCC00',
-                                'yellow-dark': '#E6B800'
+                                black: '#0a0a0a',
+                                yellow: '#FFC600',
+                                'yellow-light': '#FFD93D',
+                                'yellow-dark': '#E6B000',
+                                'gray-darker': '#0f0f0f',
+                                'gray-dark': '#1a1a1a',
+                                'gray-medium': '#2a2a2a',
+                                'gray-light': '#3a3a3a'
                             }
+                        },
+                        fontFamily: {
+                            sans: ['Inter', 'system-ui', 'sans-serif']
                         }
                     }
                 }
@@ -313,17 +322,38 @@ app.get('/', (c) => {
         </script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <style>
-            body { background-color: #1a1a1a; }
+            * {
+                font-family: 'Inter', system-ui, sans-serif;
+            }
+            body { 
+                background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+                min-height: 100vh;
+            }
             .tab-content { display: none; }
             .tab-content.active { display: block; }
+            .tab-button {
+                position: relative;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
             .tab-button.active { 
-                background-color: #FFCC00; 
+                background: linear-gradient(135deg, #FFC600 0%, #FFD93D 100%);
                 color: #000000;
-                font-weight: 700;
+                font-weight: 600;
+                box-shadow: 0 4px 20px rgba(255, 198, 0, 0.3);
+            }
+            .tab-button.active::after {
+                content: '';
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #FFC600, #FFD93D);
             }
             .tab-button:hover:not(.active) {
-                background-color: #333333;
-                color: #FFCC00;
+                background-color: #2a2a2a;
+                color: #FFC600;
+                transform: translateY(-2px);
             }
             .modal {
                 display: none;
@@ -334,73 +364,169 @@ app.get('/', (c) => {
                 width: 100%;
                 height: 100%;
                 overflow: auto;
-                background-color: rgba(0,0,0,0.7);
+                background-color: rgba(0,0,0,0.85);
+                backdrop-filter: blur(8px);
             }
-            .modal.active { display: flex; }
+            .modal.active { 
+                display: flex; 
+                animation: fadeIn 0.2s ease-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
             .modal-content {
-                background-color: #1a1a1a;
+                background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
                 margin: auto;
-                padding: 20px;
-                border: 2px solid #FFCC00;
-                border-radius: 8px;
+                padding: 32px;
+                border: 1px solid #3a3a3a;
+                border-radius: 16px;
                 max-width: 600px;
                 width: 90%;
                 max-height: 90vh;
                 overflow-y: auto;
                 color: white;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                            0 0 0 1px rgba(255, 198, 0, 0.1);
+                animation: slideUp 0.3s ease-out;
+            }
+            @keyframes slideUp {
+                from { 
+                    opacity: 0;
+                    transform: translateY(20px); 
+                }
+                to { 
+                    opacity: 1;
+                    transform: translateY(0); 
+                }
             }
             textarea {
                 min-height: 100px;
             }
             input, textarea, select {
-                background-color: #2a2a2a;
-                border-color: #444;
-                color: white;
+                background-color: #0f0f0f;
+                border: 1px solid #3a3a3a;
+                color: #ffffff;
+                transition: all 0.2s ease;
+            }
+            input:hover, textarea:hover, select:hover {
+                border-color: #4a4a4a;
             }
             input:focus, textarea:focus, select:focus {
-                border-color: #FFCC00;
-                ring-color: #FFCC00;
+                border-color: #FFC600;
+                ring-color: #FFC600;
+                box-shadow: 0 0 0 3px rgba(255, 198, 0, 0.1);
+                outline: none;
             }
             label {
-                color: #FFCC00;
+                color: #e0e0e0;
+                font-weight: 500;
+                font-size: 0.875rem;
             }
             .filter-button {
-                transition: all 0.2s;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid transparent;
+            }
+            .filter-button:hover:not(.active) {
+                background-color: #2a2a2a;
+                border-color: #3a3a3a;
+                transform: translateY(-1px);
             }
             .filter-button.active {
-                background-color: #FFCC00;
+                background: linear-gradient(135deg, #FFC600 0%, #FFD93D 100%);
                 color: #000000;
                 font-weight: 600;
+                box-shadow: 0 4px 12px rgba(255, 198, 0, 0.25);
+            }
+            .card {
+                background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+                border: 1px solid #2a2a2a;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .card:hover {
+                border-color: #3a3a3a;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3),
+                            0 0 0 1px rgba(255, 198, 0, 0.1);
+                transform: translateY(-2px);
+            }
+            .btn-primary {
+                background: linear-gradient(135deg, #FFC600 0%, #FFD93D 100%);
+                color: #000000;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(255, 198, 0, 0.25);
+            }
+            .btn-primary:hover {
+                box-shadow: 0 6px 20px rgba(255, 198, 0, 0.4);
+                transform: translateY(-2px);
+            }
+            .btn-secondary {
+                background-color: #2a2a2a;
+                color: #e0e0e0;
+                border: 1px solid #3a3a3a;
+                transition: all 0.2s ease;
+            }
+            .btn-secondary:hover {
+                background-color: #3a3a3a;
+                border-color: #4a4a4a;
+            }
+            ::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #0f0f0f;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #3a3a3a;
+                border-radius: 5px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #4a4a4a;
             }
         </style>
     </head>
     <body class="bg-gray-900">
         <div class="min-h-screen">
             <!-- Header -->
-            <header class="bg-black text-white p-4 shadow-lg border-b-4 border-yellow-400">
-                <div class="max-w-7xl mx-auto">
-                    <h1 class="text-3xl font-bold text-yellow-400">
-                        <i class="fas fa-briefcase mr-2"></i>
-                        Workflow - Sales Platform
-                    </h1>
-                    <p class="text-gray-300 mt-1">Streamline your sales operations</p>
+            <header class="relative bg-gradient-to-r from-black via-gray-900 to-black text-white shadow-2xl border-b border-gray-800">
+                <div class="absolute inset-0 bg-gradient-to-r from-yellow-600/5 via-transparent to-yellow-600/5"></div>
+                <div class="max-w-7xl mx-auto px-6 py-6 relative">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 bg-clip-text text-transparent">
+                                <i class="fas fa-briefcase mr-3"></i>
+                                Workflow
+                            </h1>
+                            <p class="text-gray-400 mt-1 text-sm font-medium">Sales Operations Platform</p>
+                        </div>
+                        <div class="hidden md:flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Status</p>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                                    <span class="text-sm text-gray-300 font-medium">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
             <!-- Tab Navigation -->
-            <div class="bg-black shadow border-b border-gray-700">
-                <div class="max-w-7xl mx-auto px-4">
-                    <nav class="flex space-x-1 py-2">
-                        <button onclick="switchTab('notes')" class="tab-button active px-6 py-3 rounded-t-lg font-medium transition-colors text-black bg-yellow-400">
+            <div class="bg-black/50 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-40">
+                <div class="max-w-7xl mx-auto px-6">
+                    <nav class="flex space-x-1">
+                        <button onclick="switchTab('notes')" class="tab-button active px-6 py-4 font-medium transition-colors">
                             <i class="fas fa-sticky-note mr-2"></i>Account Notes
                         </button>
-                        <button onclick="switchTab('documents')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors text-gray-300">
+                        <button onclick="switchTab('documents')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400">
                             <i class="fas fa-file-alt mr-2"></i>Documents
                         </button>
-                        <button onclick="switchTab('plans')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors text-gray-300">
+                        <button onclick="switchTab('plans')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400">
                             <i class="fas fa-map mr-2"></i>Territory Plans
                         </button>
-                        <button onclick="switchTab('oneononedocs')" class="tab-button px-6 py-3 rounded-t-lg font-medium transition-colors text-gray-300">
+                        <button onclick="switchTab('oneononedocs')" class="tab-button px-6 py-4 font-medium transition-colors text-gray-400">
                             <i class="fas fa-users mr-2"></i>1:1 Documents
                         </button>
                     </nav>
@@ -408,13 +534,16 @@ app.get('/', (c) => {
             </div>
 
             <!-- Tab Content -->
-            <div class="max-w-7xl mx-auto p-6">
+            <div class="max-w-7xl mx-auto px-6 py-8">
                 <!-- Account Notes Tab -->
                 <div id="notes-tab" class="tab-content active">
-                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-yellow-400">Account Notes</h2>
-                            <button onclick="openNoteModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
+                    <div class="card rounded-2xl shadow-2xl p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-1">Account Notes</h2>
+                                <p class="text-gray-400 text-sm">Track important customer interactions</p>
+                            </div>
+                            <button onclick="openNoteModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
                                 <i class="fas fa-plus mr-2"></i>New Note
                             </button>
                         </div>
@@ -426,10 +555,13 @@ app.get('/', (c) => {
 
                 <!-- Documents Tab -->
                 <div id="documents-tab" class="tab-content">
-                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-yellow-400">Customer Documents</h2>
-                            <button onclick="openDocumentModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
+                    <div class="card rounded-2xl shadow-2xl p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-1">Customer Documents</h2>
+                                <p class="text-gray-400 text-sm">Manage proposals, contracts, and presentations</p>
+                            </div>
+                            <button onclick="openDocumentModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
                                 <i class="fas fa-plus mr-2"></i>New Document
                             </button>
                         </div>
@@ -441,22 +573,25 @@ app.get('/', (c) => {
 
                 <!-- Territory Plans Tab -->
                 <div id="plans-tab" class="tab-content">
-                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-yellow-400">Territory Plans</h2>
-                            <div class="flex items-center space-x-4">
-                                <div class="flex space-x-2">
-                                    <button onclick="filterPlans('all')" class="filter-button active px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-yellow-400 text-black" data-filter="all">
+                    <div class="card rounded-2xl shadow-2xl p-8">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-1">Territory Plans</h2>
+                                <p class="text-gray-400 text-sm">Manage growth and acquisition strategies</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex gap-2">
+                                    <button onclick="filterPlans('all')" class="filter-button active px-5 py-2.5 rounded-xl text-sm font-medium transition-all" data-filter="all">
                                         All Plans
                                     </button>
-                                    <button onclick="filterPlans('growth')" class="filter-button px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="growth">
-                                        <i class="fas fa-chart-line mr-1"></i>Growth
+                                    <button onclick="filterPlans('growth')" class="filter-button px-5 py-2.5 rounded-xl text-sm font-medium transition-all bg-gray-800 text-gray-300" data-filter="growth">
+                                        <i class="fas fa-chart-line mr-1.5"></i>Growth
                                     </button>
-                                    <button onclick="filterPlans('acquisition')" class="filter-button px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="acquisition">
-                                        <i class="fas fa-plus-circle mr-1"></i>Acquisition
+                                    <button onclick="filterPlans('acquisition')" class="filter-button px-5 py-2.5 rounded-xl text-sm font-medium transition-all bg-gray-800 text-gray-300" data-filter="acquisition">
+                                        <i class="fas fa-plus-circle mr-1.5"></i>Acquisition
                                     </button>
                                 </div>
-                                <button onclick="openPlanModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
+                                <button onclick="openPlanModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
                                     <i class="fas fa-plus mr-2"></i>New Plan
                                 </button>
                             </div>
@@ -469,10 +604,13 @@ app.get('/', (c) => {
 
                 <!-- 1:1 Documents Tab -->
                 <div id="oneononedocs-tab" class="tab-content">
-                    <div class="bg-black rounded-lg shadow-xl border border-yellow-400 p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-yellow-400">1:1 Documents</h2>
-                            <button onclick="openOneOnOneModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 font-semibold transition-colors">
+                    <div class="card rounded-2xl shadow-2xl p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-1">1:1 Documents</h2>
+                                <p class="text-gray-400 text-sm">Track meetings and action items with management</p>
+                            </div>
+                            <button onclick="openOneOnOneModal()" class="btn-primary px-6 py-3 rounded-xl font-semibold transition-all">
                                 <i class="fas fa-plus mr-2"></i>New 1:1
                             </button>
                         </div>
@@ -487,29 +625,32 @@ app.get('/', (c) => {
         <!-- Note Modal -->
         <div id="note-modal" class="modal">
             <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-yellow-400" id="note-modal-title">New Account Note</h3>
-                    <button onclick="closeNoteModal()" class="text-yellow-400 hover:text-yellow-300">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="note-modal-title">New Account Note</h3>
+                        <p class="text-gray-400 text-sm mt-1">Add details about your customer interaction</p>
+                    </div>
+                    <button onclick="closeNoteModal()" class="text-gray-400 hover:text-white transition-colors p-2">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="note-form" class="space-y-4">
+                <form id="note-form" class="space-y-5">
                     <input type="hidden" id="note-id">
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Account Name</label>
-                        <input type="text" id="note-account" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Account Name</label>
+                        <input type="text" id="note-account" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Note Title</label>
-                        <input type="text" id="note-title" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Note Title</label>
+                        <input type="text" id="note-title" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Note Content</label>
-                        <textarea id="note-content" required rows="5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
+                        <label class="block text-sm font-medium mb-2">Note Content</label>
+                        <textarea id="note-content" required rows="5" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
                     </div>
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closeNoteModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeNoteModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Note</button>
                     </div>
                 </form>
             </div>
@@ -518,21 +659,24 @@ app.get('/', (c) => {
         <!-- Document Modal -->
         <div id="document-modal" class="modal">
             <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-yellow-400" id="document-modal-title">New Document</h3>
-                    <button onclick="closeDocumentModal()" class="text-yellow-400 hover:text-yellow-300">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="document-modal-title">New Document</h3>
+                        <p class="text-gray-400 text-sm mt-1">Store customer-facing documents</p>
+                    </div>
+                    <button onclick="closeDocumentModal()" class="text-gray-400 hover:text-white transition-colors p-2">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="document-form" class="space-y-4">
+                <form id="document-form" class="space-y-5">
                     <input type="hidden" id="document-id">
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Document Name</label>
-                        <input type="text" id="document-name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Document Name</label>
+                        <input type="text" id="document-name" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Document Type</label>
-                        <select id="document-type" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Document Type</label>
+                        <select id="document-type" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                             <option value="">Select type...</option>
                             <option value="Proposal">Proposal</option>
                             <option value="Contract">Contract</option>
@@ -542,16 +686,16 @@ app.get('/', (c) => {
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Account Name (Optional)</label>
-                        <input type="text" id="document-account" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Account Name (Optional)</label>
+                        <input type="text" id="document-account" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Document Content</label>
-                        <textarea id="document-content" required rows="5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
+                        <label class="block text-sm font-medium mb-2">Document Content</label>
+                        <textarea id="document-content" required rows="5" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
                     </div>
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closeDocumentModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeDocumentModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Document</button>
                     </div>
                 </form>
             </div>
@@ -560,48 +704,51 @@ app.get('/', (c) => {
         <!-- Plan Modal -->
         <div id="plan-modal" class="modal">
             <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-yellow-400" id="plan-modal-title">New Territory Plan</h3>
-                    <button onclick="closePlanModal()" class="text-yellow-400 hover:text-yellow-300">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="plan-modal-title">New Territory Plan</h3>
+                        <p class="text-gray-400 text-sm mt-1">Define growth or acquisition strategy</p>
+                    </div>
+                    <button onclick="closePlanModal()" class="text-gray-400 hover:text-white transition-colors p-2">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="plan-form" class="space-y-4">
+                <form id="plan-form" class="space-y-5">
                     <input type="hidden" id="plan-id">
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Plan Name</label>
-                        <input type="text" id="plan-name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Plan Name</label>
+                        <input type="text" id="plan-name" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Territory Name</label>
-                        <input type="text" id="plan-territory" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Territory Name</label>
+                        <input type="text" id="plan-territory" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Account Type</label>
-                        <select id="plan-account-type" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Account Type</label>
+                        <select id="plan-account-type" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                             <option value="growth">Growth (Renewals, Rewrites, Expansions)</option>
                             <option value="acquisition">Acquisition (Net New)</option>
                         </select>
-                        <p class="text-xs text-gray-400 mt-1">
-                            <strong>Growth:</strong> Existing customers (renewals, rewrites, upsells) | 
-                            <strong>Acquisition:</strong> Net new prospects
+                        <p class="text-xs text-gray-500 mt-2 px-1">
+                            <span class="font-medium text-blue-400">Growth:</span> Existing customers (renewals, rewrites, upsells) | 
+                            <span class="font-medium text-green-400">Acquisition:</span> Net new prospects
                         </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Status</label>
-                        <select id="plan-status" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Status</label>
+                        <select id="plan-status" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                             <option value="draft">Draft</option>
                             <option value="active">Active</option>
                             <option value="completed">Completed</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Plan Content</label>
-                        <textarea id="plan-content" required rows="8" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
+                        <label class="block text-sm font-medium mb-2">Plan Content</label>
+                        <textarea id="plan-content" required rows="8" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
                     </div>
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closePlanModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closePlanModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Plan</button>
                     </div>
                 </form>
             </div>
@@ -610,37 +757,40 @@ app.get('/', (c) => {
         <!-- 1:1 Modal -->
         <div id="oneonone-modal" class="modal">
             <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-yellow-400" id="oneonone-modal-title">New 1:1 Document</h3>
-                    <button onclick="closeOneOnOneModal()" class="text-yellow-400 hover:text-yellow-300">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="oneonone-modal-title">New 1:1 Document</h3>
+                        <p class="text-gray-400 text-sm mt-1">Record meeting notes and action items</p>
+                    </div>
+                    <button onclick="closeOneOnOneModal()" class="text-gray-400 hover:text-white transition-colors p-2">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="oneonone-form" class="space-y-4">
+                <form id="oneonone-form" class="space-y-5">
                     <input type="hidden" id="oneonone-id">
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Manager Name</label>
-                        <input type="text" id="oneonone-manager" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Manager Name</label>
+                        <input type="text" id="oneonone-manager" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Meeting Date</label>
-                        <input type="date" id="oneonone-date" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400">
+                        <label class="block text-sm font-medium mb-2">Meeting Date</label>
+                        <input type="date" id="oneonone-date" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Topics</label>
-                        <input type="text" id="oneonone-topics" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400" placeholder="Comma-separated topics">
+                        <label class="block text-sm font-medium mb-2">Topics</label>
+                        <input type="text" id="oneonone-topics" required class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all" placeholder="Comma-separated topics">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Notes</label>
-                        <textarea id="oneonone-notes" required rows="5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
+                        <label class="block text-sm font-medium mb-2">Notes</label>
+                        <textarea id="oneonone-notes" required rows="5" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Action Items (Optional)</label>
-                        <textarea id="oneonone-actions" rows="3" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"></textarea>
+                        <label class="block text-sm font-medium mb-2">Action Items (Optional)</label>
+                        <textarea id="oneonone-actions" rows="3" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-yellow-400 transition-all"></textarea>
                     </div>
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" onclick="closeOneOnOneModal()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 text-gray-300">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500">Save</button>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeOneOnOneModal()" class="btn-secondary px-6 py-3 rounded-xl font-medium">Cancel</button>
+                        <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-semibold">Save Meeting</button>
                     </div>
                 </form>
             </div>
